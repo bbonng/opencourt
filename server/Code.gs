@@ -909,14 +909,21 @@ function writeResults_(s) {
     const sa = parseInt(a.sa, 10), sb = parseInt(a.sb, 10);
     if (!isFinite(sa) || !isFinite(sb) || sa < 0 || sb < 0 || sa > 99 || sb > 99) return err('점수를 확인해 주세요.');
     if (sa === sb) return err('동점은 입력할 수 없습니다. 이긴 팀을 정해 주세요.');
-    if (!ctx.isHost && a.by && !playersOf(m).includes(a.by)) return err('이 경기에 뛴 사람만 결과를 넣을 수 있습니다.');
+    // 호스트는 모든 경기, 참가자는 자기 경기만. 참가자는 보낸 값이 아니라 '초대 링크로 응답한 폰'으로 서버가 직접 확인
+    let by;
+    if (ctx.isHost) by = a.by && s.players.some((p) => p.id === a.by) ? a.by : 'host';
+    else {
+      const me = ctx.dev ? s.players.find((p) => p.dev && p.dev === ctx.dev) : null;
+      if (!me || !playersOf(m).includes(me.id)) return err('자기 경기 결과만 넣을 수 있습니다. 다른 경기는 호스트에게 부탁해 주세요.');
+      by = me.id;
+    }
     const wasDone = m.state === 'done';
     // 같은 코트 사람들이 거의 동시에 누른 경우: 먼저 들어간 결과를 지키고, 고치기는 명시적으로만
     if (wasDone && !a.edit) {
       const who = m.by === 'host' ? '호스트' : ((s.players.find((p) => p.id === m.by) || {}).name || '다른 사람');
       return err(`${who} 님이 이미 결과를 넣었습니다 (${m.sa}:${m.sb}). 틀렸다면 기록에서 눌러 고쳐 주세요.`);
     }
-    m.sa = sa; m.sb = sb; m.state = 'done'; m.by = a.by || (ctx.isHost ? 'host' : ''); m.at = ctx.now;
+    m.sa = sa; m.sb = sb; m.state = 'done'; m.by = by; m.at = ctx.now;
     if (wasDone) m.edited = true;
     if (!m.court) m.court = 1;
     assign(s, ctx);

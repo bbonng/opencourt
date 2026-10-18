@@ -24,9 +24,10 @@ function runLive(s, rnd, hooks = {}) {
     if (hooks.before) hooks.before(s, steps);
     // 아무 코트나 먼저 끝남 (듀스로 길어지는 코트 흉내)
     const m = playing[Math.floor(rnd() * playing.length)];
-    const by = m.a[0];
+    const scorer = m.a.concat(m.b).map((id) => s.players.find((p) => p.id === id)).find((p) => p && p.dev);
+    const by = scorer ? scorer.id : undefined;
     const win = rnd() < 0.5;
-    ok(Core.apply(s, { type: 'score', mid: m.id, sa: win ? 11 : 6, sb: win ? 6 : 11, by }, U('d-' + by)));
+    ok(Core.apply(s, { type: 'score', mid: m.id, sa: win ? 11 : 6, sb: win ? 6 : 11, by }, scorer ? U(scorer.dev) : H));
     if (++steps > 500) throw new Error('끝나지 않음');
   }
   return steps;
@@ -108,12 +109,20 @@ for (const [n, c] of [[8, 2], [10, 2], [12, 3], [9, 1], [6, 1]]) {
   ok(Core.apply(s, { type: 'rsvp', name: 'Q1', status: 'yes' }, U('q1')));
   ok(Core.apply(s, { type: 'draw' }, H)); ok(Core.apply(s, { type: 'start' }, H));
   const m = Core.allMatches(s).find((x) => x.state === 'play');
-  assert(Core.apply(s, { type: 'score', mid: m.id, sa: 11, sb: 11, by: m.a[0] }, U()).error, '동점 거부');
+  const devOf = (pid) => s.players.find((p) => p.id === pid).dev;
+  assert(Core.apply(s, { type: 'score', mid: m.id, sa: 11, sb: 11, by: m.a[0] }, U(devOf(m.a[0]))).error, '동점 거부');
   const outsider = s.players.find((p) => !m.a.concat(m.b).includes(p.id));
-  if (outsider) assert(Core.apply(s, { type: 'score', mid: m.id, sa: 11, sb: 3, by: outsider.id }, U()).error, '안 뛴 사람 입력 거부');
-  ok(Core.apply(s, { type: 'score', mid: m.id, sa: 11, sb: 3, by: m.b[1] }, U()));
+  if (outsider) {
+    assert(Core.apply(s, { type: 'score', mid: m.id, sa: 11, sb: 3, by: outsider.id }, U(devOf(outsider.id))).error, '안 뛴 사람 입력 거부');
+    assert(Core.apply(s, { type: 'score', mid: m.id, sa: 11, sb: 3, by: m.a[0] }, U(devOf(outsider.id))).error, '다른 사람 이름을 사칭해도 거부');
+  }
+  assert(Core.apply(s, { type: 'score', mid: m.id, sa: 11, sb: 3 }, U('모르는폰')).error, '응답 안 한 폰 거부');
+  ok(Core.apply(s, { type: 'score', mid: m.id, sa: 11, sb: 3, by: m.b[1] }, U(devOf(m.b[1]))));
+  assert.strictEqual(Core.findMatch(s, m.id).by, m.b[1], '입력자는 서버가 폰으로 판별');
   const v1 = s.v;
-  assert(Core.apply(s, { type: 'score', mid: m.id, sa: 9, sb: 11, by: m.a[0] }, U()).error, '동시 입력 덮어쓰기 차단'); ok(Core.apply(s, { type: 'score', mid: m.id, sa: 9, sb: 11, by: m.a[0], edit: true }, U())); // 명시적 수정
+  assert(Core.apply(s, { type: 'score', mid: m.id, sa: 9, sb: 11, by: m.a[0] }, U(devOf(m.a[0]))).error, '동시 입력 덮어쓰기 차단'); ok(Core.apply(s, { type: 'score', mid: m.id, sa: 9, sb: 11, by: m.a[0], edit: true }, U(devOf(m.a[0])))); // 명시적 수정
+  ok(Core.apply(s, { type: 'score', mid: m.id, sa: 11, sb: 2, edit: true }, H)); // 호스트는 어떤 경기든 수정
+  console.log('[결과 권한] 참가자는 자기 경기만(사칭·외부 폰 차단), 호스트는 모든 경기 OK');
   assert(s.v > v1);
   const pub = Core.publicState(s, false);
   assert(!pub.hostKey && pub.players.every((p) => p.dev === undefined));
