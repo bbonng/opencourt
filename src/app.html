@@ -304,7 +304,8 @@ if (A.eid) {
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const S = () => A.s;
 const SP = () => Core.SPORTS[S().sport];
-const isHost = () => !!S() && !!S().youHost; // 서버가 판별 (호스트 키 또는 지정된 호스트의 폰)
+// 서버가 판별 (호스트 키 또는 지정된 호스트의 폰). 예전 서버(youHost 없음)와도 호환
+const isHost = () => !!S() && (S().youHost != null ? !!S().youHost : (!!A.k && S().hostKey === A.k));
 const byId = (id) => S().players.find((p) => p.id === id);
 const nm = (id) => (byId(id) || { name: '?' }).name;
 const me = () => (A.pid ? byId(A.pid) : null);
@@ -373,7 +374,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 function setState(s) {
   const prevMine = A.s && A.pid ? JSON.stringify(Core.myView(A.s, A.pid).current && Core.myView(A.s, A.pid).current.id) : null;
-  const wasHost = A.s ? !!A.s.youHost : null;
+  const wasHost = A.s ? isHost() : null;
   A.s = s; A.v = s.v; A.loaded = true; A.err = null;
   if (!A.pid && isHost()) { const h = s.players.find((p) => p.src === 'host'); if (h && mem()[A.eid] && mem()[A.eid].hostPid === h.id) A.pid = h.id; }
   if (A.pid && !byId(A.pid)) A.pid = null;
@@ -384,9 +385,9 @@ function setState(s) {
     const now = JSON.stringify(v.current && v.current.id);
     if (now !== prevMine && v.current && navigator.vibrate) navigator.vibrate([120, 60, 120]);
   }
-  if (wasHost !== null && wasHost !== !!s.youHost) {
+  if (wasHost !== null && wasHost !== isHost()) {
     A.tab = null;
-    toast(s.youHost ? '호스트로 지정되었습니다. 진행·명단·초대 메뉴가 생겼습니다.' : '호스트 지정이 해제되었습니다.');
+    toast(isHost() ? '호스트로 지정되었습니다. 진행·명단·초대 메뉴가 생겼습니다.' : '호스트 지정이 해제되었습니다.');
   }
   render();
 }
