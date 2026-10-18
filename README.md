@@ -4,6 +4,7 @@
 초대 링크로 참석 응답을 받고, 경기가 시작되면 각자 폰에 내 코트와 짝이 뜨며, 결과는 뛴 사람이 직접 넣습니다.
 
 - 앱 주소: https://bbonng.github.io/opencourt/
+- 미리 보기(연수용 예시): https://bbonng.github.io/opencourt/demo/ — 서버 없이 페이지 안에서 돌아감
 - 서버: Google Apps Script (`server/Code.gs`)
 
 ## 흐름
@@ -28,6 +29,7 @@
 ```bash
 # src/ 또는 server/glue.gs 를 고친 뒤
 node dev/build.js        # index.html, server/Code.gs 다시 만들기
+node dev/build-demo.js   # demo/index.html (미리 보기판) 다시 만들기
 node dev/core.test.js    # 진행 로직 검증
 node dev/mock.js         # 실제 Code.gs로 도는 모의 서버
 # → http://localhost:8787/?api=http://localhost:8787/exec

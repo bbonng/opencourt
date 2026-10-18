@@ -1,0 +1,2014 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>오픈코트 · 예시</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#EDF1EE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1512" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 휴대폰 한 손 조작: 상단 고정 탭, 한 줄 흐름, 경기는 위에서 본 미니 코트, 핵심 행동은 하단 고정 버튼 */
+:root{
+  --paper:#EDF1EE; --surface:#FFFFFF; --ink:#13201B; --muted:#5A6A63; --line:#D2DBD6;
+  --court:#2E6B57; --court-in:#387A64; --chalk:#F3F7F4; --ball:#E3CF3A; --ball-ink:#2A2606;
+  --accent-text:#2E6B57; --danger:#B4452F; --gold:#C49A1C; --silver:#8E9B95; --bronze:#A5683A;
+  --shade:rgba(19,32,27,.45);
+  --display:"Black Han Sans","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --r-sm:8px; --r-md:14px;
+  --ease-out:cubic-bezier(.23,1,.32,1); --ease-drawer:cubic-bezier(.32,.72,0,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --paper:#0E1512; --surface:#16211D; --ink:#E3ECE7; --muted:#93A39C; --line:#28362F;
+  --court:#23574A; --court-in:#2C6655; --chalk:#E6EEEA; --ball:#E6D44A; --ball-ink:#1E1B03;
+  --accent-text:#E6D44A; --danger:#E3826B; --gold:#D9B23A; --silver:#A9B5AF; --bronze:#C88552;
+  --shade:rgba(0,0,0,.6); color-scheme:dark}}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:150px;scroll-padding-bottom:120px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--ball);outline-offset:2px}
+h1,h2,h3{text-wrap:balance}
+.skip{position:absolute;left:-9999px;top:0}
+.skip:focus{left:16px;top:calc(8px + env(safe-area-inset-top,0px));z-index:30;background:var(--ink);color:var(--paper);padding:8px 14px;border-radius:999px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* 누르는 느낌: 모든 버튼 공통 */
+.press{transition:transform 160ms var(--ease-out),opacity 160ms ease}
+.press:active{transform:scale(.97)}
+@media (prefers-reduced-motion: reduce){.press,.press:active{transition:opacity 160ms ease;transform:none}}
+
+.app{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(env(safe-area-inset-top,0px)) calc(120px + env(safe-area-inset-bottom,0px))}
+
+/* 상단 */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);padding-block:14px 10px}
+.brand{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.brand .ttl{min-width:0}
+.brand h1{margin:0;font-family:var(--display);font-weight:400;font-size:25px;letter-spacing:-.01em;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta{display:flex;flex-wrap:wrap;gap:4px 10px;margin:4px 0 0;color:var(--muted);font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-weight:700;color:var(--ink)}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.pill.live::before{background:var(--court);box-shadow:0 0 0 3px color-mix(in srgb,var(--court) 25%,transparent)}
+.pill.done::before{background:var(--gold)}
+.net{font-size:12px;color:var(--danger);white-space:nowrap;padding-top:4px}
+.tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+.tabs button{border:0;background:transparent;border-radius:999px;padding:8px 0;font-weight:500;color:var(--muted);position:relative}
+.tabs button[aria-selected="true"]{background:var(--court);color:var(--chalk)}
+.tabs .dot{display:inline-block;vertical-align:super;margin-left:3px;width:7px;height:7px;border-radius:50%;background:var(--ball)}
+@media (hover:hover) and (pointer:fine){.tabs button:not([aria-selected="true"]):hover{color:var(--ink)}}
+
+/* 블록 */
+.block{margin-top:22px}
+.block>h2{font-size:15px;font-weight:700;margin:0 0 10px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.block>h2 small{font-weight:400;color:var(--muted);font-size:13px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row>label,.row>.lbl{font-weight:500;min-width:0}
+.hint{display:block;font-weight:400;font-size:12.5px;color:var(--muted)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px;flex-shrink:0}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:999px;font-size:14px;color:var(--muted);min-height:34px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.step{display:inline-flex;align-items:center;gap:4px;flex-shrink:0}
+.step button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--paper);font-size:18px;line-height:1}
+.step output{min-width:48px;text-align:center;font-family:var(--display);font-size:20px;font-variant-numeric:tabular-nums}
+.toggle{position:relative;width:48px;height:28px;flex-shrink:0;appearance:none;-webkit-appearance:none;background:var(--line);border-radius:999px;margin:0;cursor:pointer;transition:background-color 160ms ease}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--surface);transition:transform 200ms var(--ease-out)}
+.toggle:checked{background:var(--court)}
+.toggle:checked::after{transform:translateX(20px)}
+.field{display:grid;gap:4px;padding:12px 14px;border-top:1px solid var(--line)}
+.field:first-child{border-top:0}
+.field label{font-size:13px;color:var(--muted)}
+.in{width:100%;min-width:0;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--paper);padding:10px 12px;font-size:16px}
+.in:focus-visible{outline:2px solid var(--court);outline-offset:0;border-color:var(--court)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.summary{margin:10px 2px 0;color:var(--muted);font-size:13.5px}
+.summary b{color:var(--ink);font-weight:700}
+.linkbtn{border:0;background:none;padding:0;color:var(--accent-text);font-weight:500;text-decoration:underline;text-underline-offset:3px}
+.note{margin-top:14px;padding:12px 14px;border-radius:var(--r-sm);background:var(--surface);border:1px dashed var(--line);font-size:14px;color:var(--muted)}
+.note b{color:var(--ink)}
+.banner{margin-top:14px;padding:12px 14px;border-radius:var(--r-sm);background:var(--ball);color:var(--ball-ink);display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;font-weight:500}
+.banner span{min-width:0}
+.banner button{border:0;border-radius:999px;background:var(--ball-ink);color:var(--ball);padding:8px 14px;font-weight:700;flex-shrink:0}
+
+/* 버튼 */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:6;background:linear-gradient(to top,var(--paper) 72%,transparent);padding-top:22px;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.dock:empty{display:none}
+.dock-in{max-width:560px;margin:0 auto;display:flex;gap:8px}
+.primary{flex:1;border:0;border-radius:999px;background:var(--court);color:var(--chalk);padding:15px 18px;font-weight:700;font-size:16px;min-height:52px}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+.secondary{border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:14px 18px;font-weight:500;min-height:52px}
+.small{min-height:36px;padding:7px 14px;font-size:14px;white-space:nowrap;flex-shrink:0}
+.armed{background:var(--danger)!important;color:#fff!important;border-color:var(--danger)!important}
+@media (hover:hover) and (pointer:fine){.primary:not(:disabled):hover{background:color-mix(in srgb,var(--court) 88%,var(--ink))}.secondary:hover{border-color:var(--muted)}}
+
+/* 참가자 목록 */
+.add{display:flex;gap:8px;padding:10px;border-bottom:1px solid var(--line)}
+.add .in{border-radius:999px}
+.add button{border:0;border-radius:999px;background:var(--ink);color:var(--paper);padding:0 16px;font-weight:700;flex-shrink:0}
+.player{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--line)}
+.player:first-of-type{border-top:0}
+.player.off .pname{color:var(--muted)}
+.check{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);background:transparent;display:grid;place-items:center;padding:0}
+.check[aria-pressed="true"]{background:var(--court);border-color:var(--court)}
+.check[aria-pressed="true"]::after{content:"";width:9px;height:5px;border:2px solid var(--chalk);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}
+.pname{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pname small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.lv{min-width:52px;height:32px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-size:13px;font-weight:700;padding:0 10px;white-space:nowrap}
+.lv.unset{font-weight:400;color:var(--muted)}
+.del{width:32px;height:32px;border:0;background:transparent;color:var(--muted);font-size:20px;line-height:1;border-radius:50%}
+.del.armed{width:auto;padding:0 10px;font-size:12px;border-radius:999px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:7px 12px;font-size:14px;min-height:36px}
+.chip[aria-pressed="true"]{background:var(--ball);color:var(--ball-ink);border-color:var(--ball)}
+.chip.static{cursor:default}
+.chip small{color:var(--muted);margin-left:4px}
+.team{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;border-top:1px solid var(--line)}
+.team b{font-weight:500;min-width:0}
+
+/* 미니 코트 */
+.court{position:relative;display:grid;grid-template-columns:1fr 6px 1fr;aspect-ratio:2.05/1;max-width:100%;background:var(--court);border-radius:6px;padding:9px}
+.half{position:relative;border:2px solid var(--chalk);background:var(--court-in);display:grid;grid-template-rows:1fr 1fr;padding:0;color:var(--chalk);text-align:center;font:inherit}
+.half.a{border-right:0}.half.b{border-left:0}
+.half::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--chalk);opacity:.85}
+.half::after{content:"";position:absolute;top:calc(50% - 1px);height:2px;background:var(--chalk);opacity:.85}
+.half.a::before{right:32%}.half.a::after{left:0;right:32%}
+.half.b::before{left:32%}.half.b::after{right:0;left:32%}
+.half .pl{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:clamp(13px,3.6vw,16px);line-height:1.2;padding:0 4px;min-width:0;word-break:keep-all}
+.half.a .pl{margin-right:32%}.half.b .pl{margin-left:32%}
+.half .pl.me{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+.half.mine{box-shadow:inset 0 0 0 3px var(--ball)}
+.half.win{background:var(--ball)}
+.half.win .pl{color:var(--ball-ink)}
+.half.lose{opacity:.62}
+.net-line{position:relative;background:var(--chalk);opacity:.95}
+.net-line::before,.net-line::after{content:"";position:absolute;left:-3px;width:12px;height:6px;border-radius:2px;background:var(--chalk)}
+.net-line::before{top:-9px}.net-line::after{bottom:-9px}
+.score{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 12px;font-family:var(--display);font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap;box-shadow:0 2px 8px var(--shade);pointer-events:none}
+.court.empty{display:grid;place-items:center;grid-template-columns:1fr;color:var(--chalk);font-weight:500;opacity:.75}
+.cwrap .clabel{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;color:var(--muted);margin:0 2px 6px}
+.cwrap .clabel b{color:var(--ink);font-weight:700}
+.cwrap .clabel span{min-width:0;text-align:right}
+.courts{display:grid;gap:18px;margin-top:16px}
+.tap{display:block;width:100%;border:0;background:none;padding:0;text-align:left}
+
+/* 내 경기 */
+.hero{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px 16px 16px}
+.hero.play{border-color:var(--court);box-shadow:0 0 0 2px color-mix(in srgb,var(--court) 30%,transparent)}
+.hero-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}
+.hero-k{margin:0;font-size:14px;font-weight:700;color:var(--muted)}
+.hero-court{display:flex;align-items:baseline;gap:4px;font-family:var(--display);line-height:.9}
+.hero-court .num{font-size:64px;color:var(--accent-text)}
+.hero-court .unit{font-size:24px}
+.hero h2{margin:2px 0 0;font-size:22px;line-height:1.3}
+.hero .why{margin:0 0 14px;font-size:15px}
+.hero .why b{font-weight:700}
+.vs{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:0 0 14px;font-size:15px}
+.vs dt{color:var(--muted)}
+.vs dd{margin:0;font-weight:700;word-break:keep-all}
+.elapsed{margin:10px 0 0;font-size:13px;color:var(--muted);text-align:center}
+.recline{display:flex;gap:16px;margin-top:14px;font-size:14px;color:var(--muted)}
+.recline b{color:var(--ink);font-family:var(--display);font-weight:400;font-size:20px;margin-right:2px;font-variant-numeric:tabular-nums}
+.list{margin:0;padding:0;list-style:none}
+.list li{display:flex;justify-content:space-between;gap:12px;padding:11px 14px;border-top:1px solid var(--line);font-size:14px}
+.list li:first-child{border-top:0}
+.list li span:first-child{color:var(--muted);flex-shrink:0}
+.list li span:last-child{text-align:right;min-width:0}
+
+/* 대기열 */
+.queue li{align-items:flex-start}
+.queue .q-who{display:block;font-weight:500;color:var(--ink)}
+.queue .q-why{display:block;font-size:12.5px;color:var(--muted)}
+
+/* 순위 */
+.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:8px;margin-top:18px}
+.pod{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 8px 12px;text-align:center;min-width:0}
+.pod .medal{width:46px;height:46px;margin:0 auto 8px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:24px;color:#fff}
+.pod.g{padding-block:24px 16px}.pod.g .medal{width:58px;height:58px;font-size:30px;background:var(--gold)}
+.pod.s .medal{background:var(--silver)}.pod.b .medal{background:var(--bronze)}
+.pod .who{font-weight:700;word-break:keep-all;line-height:1.3}
+.pod .rec{font-size:12.5px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
+.tbl-wrap{overflow-x:auto;margin-top:16px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14.5px}
+th{font-weight:500;font-size:12.5px;color:var(--muted);text-align:right;padding:8px 6px;border-bottom:1px solid var(--line)}
+td{padding:11px 6px;text-align:right;border-bottom:1px solid var(--line)}
+th:nth-child(2),td:nth-child(2){text-align:left}
+td:first-child{font-family:var(--display);font-size:18px;text-align:center;width:40px}
+td:nth-child(2){font-weight:500}
+tr.me td{background:color-mix(in srgb,var(--ball) 18%,transparent)}
+tr.top3 td:first-child{color:var(--accent-text)}
+.empty{text-align:center;padding:40px 16px;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:6px}
+
+/* 홈 */
+.home-hero{margin-top:28px}
+.home-hero h1{margin:0;font-family:var(--display);font-weight:400;font-size:40px;line-height:1.05}
+.home-hero p{margin:10px 0 0;color:var(--muted);max-width:34em}
+.recent a{display:flex;justify-content:space-between;gap:12px;padding:12px 14px;border-top:1px solid var(--line);color:inherit;text-decoration:none}
+.recent a:first-child{border-top:0}
+.recent a span:last-child{color:var(--muted);font-size:13px;flex-shrink:0}
+
+/* 시트 */
+.sheet{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center;background:var(--shade);opacity:0;transition:opacity 200ms ease;overscroll-behavior:contain}
+.sheet[data-open]{opacity:1;transition-duration:300ms}
+.sheet-in{width:100%;max-width:560px;background:var(--surface);border-radius:20px 20px 0 0;padding:18px max(18px,env(safe-area-inset-left,0px)) calc(18px + env(safe-area-inset-bottom,0px));max-height:90%;overflow-y:auto;overscroll-behavior:contain;transform:translateY(100%);transition:transform 200ms var(--ease-out)}
+.sheet[data-open] .sheet-in{transform:translateY(0);transition:transform 340ms var(--ease-drawer)}
+@media (prefers-reduced-motion: reduce){.sheet-in,.sheet[data-open] .sheet-in{transform:none;transition:none}}
+.sheet h3{margin:0;font-size:13px;font-weight:500;color:var(--muted)}
+.sheet .big{font-size:19px;font-weight:700;margin:2px 0 14px;word-break:keep-all}
+.teampick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 16px}
+.teampick button{border:2px solid var(--line);background:var(--paper);border-radius:var(--r-md);padding:12px 8px;font-weight:700;word-break:keep-all;min-height:64px}
+.teampick button[aria-pressed="true"]{background:var(--ball);border-color:var(--ball);color:var(--ball-ink)}
+.teampick small{display:block;font-weight:400;font-size:12px;opacity:.75}
+.scoreline{display:flex;align-items:center;justify-content:center;gap:16px;font-family:var(--display);font-size:44px;line-height:1;margin:2px 0 14px;font-variant-numeric:tabular-nums}
+.scoreline .w{color:var(--accent-text)}
+.scoreline .sep{font-size:28px;color:var(--muted)}
+.scoreline small{display:block;font-family:var(--body);font-size:12px;color:var(--muted);margin-top:4px;text-align:center}
+.pad{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
+.pad button{height:46px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--paper);font-family:var(--display);font-size:20px;font-variant-numeric:tabular-nums}
+.pad button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.deuce{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:10px 12px;border-radius:var(--r-sm);background:var(--paper)}
+.sheet-actions{display:flex;gap:8px;margin-top:18px}
+.ghost{border:0;background:none;color:var(--danger);font-weight:500;padding:12px 8px}
+.err{color:var(--danger);font-size:13.5px;margin:8px 2px 0}
+
+/* 알림 */
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:25;max-width:min(92vw,480px);background:var(--ink);color:var(--paper);padding:11px 16px;border-radius:16px;font-size:14px;font-weight:500;text-align:center;text-wrap:pretty;box-shadow:0 6px 20px var(--shade);transform:translate(-50%,12px);opacity:0;pointer-events:none;transition:transform 200ms var(--ease-out),opacity 200ms ease}
+.toast[data-show]{transform:translate(-50%,0);opacity:1}
+.toast.bad{background:var(--danger);color:#fff}
+@media (prefers-reduced-motion: reduce){.toast{transform:translate(-50%,0)}}
+
+.demo{background:var(--ink);color:var(--paper);padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.demo-in{max-width:560px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;font-size:13px}
+.demo b{font-weight:700;margin-right:2px}
+.demo select{flex:1;min-width:150px;font-size:14px;padding:7px 10px;border-radius:999px;border:1px solid color-mix(in srgb,var(--paper) 30%,transparent);background:transparent;color:var(--paper)}
+.demo select option{color:#13201B;background:#fff}
+.demo button{border:1px solid color-mix(in srgb,var(--paper) 30%,transparent);background:transparent;color:var(--paper);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:500}
+.demo button[data-armed]{background:var(--danger);border-color:var(--danger);color:#fff}
+.demo p{flex-basis:100%;margin:0;opacity:.75;font-size:12.5px}
+</style>
+</head>
+<body>
+<a class="skip" href="#view">본문으로 건너뛰기</a>
+<div class="demo" id="demo-bar"><div class="demo-in">
+  <b>미리 보기</b>
+  <label class="vh" for="demo-who">보는 사람</label>
+  <select id="demo-who">
+    <option value="김도윤">참가자 김도윤의 폰</option>
+    <option value="이서연">참가자 이서연의 폰</option>
+    <option value="host">호스트 이길봉의 폰</option>
+    <option value="join">초대 링크를 처음 연 사람</option>
+    <option value="home">새 모임 만들기 화면</option>
+  </select>
+  <button type="button" class="press" data-demo="others">다른 코트 결과 넣기</button>
+  <button type="button" class="press" data-demo="reset">처음 상태로</button>
+  <p>연수용 예시입니다. 실제 서버에 저장되지 않고 이 브라우저 안에서만 돌아갑니다. 사람을 바꿔 가며 같은 모임을 각자 폰에서 보는 화면을 확인하세요.</p>
+</div></div>
+<div class="app">
+  <header class="top" id="top"></header>
+  <main id="view" tabindex="-1"></main>
+</div>
+<div class="dock" id="dock"></div>
+<div class="sheet" id="sheet" hidden><div class="sheet-in" id="sheetIn" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>/* 데모 전용: 앱스크립트 대신 페이지 안에서 서버 로직(Core)을 돌린다.
+ * 앱 코드보다 먼저 실행되어 fetch('demo://…') 요청을 가로챈다. */
+(function () {
+  'use strict';
+  const KEY = 'oc:demo-db-v1';
+  let db = {};
+  try { db = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { db = {}; }
+  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {} };
+  const rid = (n) => Array.from({ length: n }, () => '0123456789abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 36)]).join('');
+  const ctx = (isHost, dev) => ({ now: Date.now(), isHost: !!isHost, dev: String(dev || ''), id: rid });
+
+  function handle(method, url, body) {
+    const Core = window.Core;
+    if (method === 'GET') {
+      const q = new URL(url).searchParams;
+      const s = db[q.get('e')];
+      if (!s) return { error: '모임을 찾을 수 없습니다.' };
+      if (q.get('v') && +q.get('v') === s.v) return { same: true, v: s.v };
+      return { ok: true, v: s.v, state: Core.publicState(s, Core.hostCheck(s, q.get('k'), q.get('dev')), q.get('k') === s.hostKey) };
+    }
+    const b = JSON.parse(body || '{}');
+    if (b.a === 'create') {
+      const s = Core.newEvent(b.event || {}, ctx(true, b.dev));
+      db[s.id] = s; persist();
+      return { ok: true, id: s.id, hostKey: s.hostKey, v: s.v, state: Core.publicState(s, true, true) };
+    }
+    if (b.a === 'act') {
+      const s = db[b.e];
+      if (!s) return { error: '모임을 찾을 수 없습니다.' };
+      const isHost = Core.hostCheck(s, b.k, b.dev);
+      const r = Core.apply(s, b.action || {}, ctx(isHost, b.dev)) || {};
+      if (r.error) return { error: r.error, v: s.v };
+      persist();
+      return { ok: true, result: r, v: s.v, state: Core.publicState(s, Core.hostCheck(s, b.k, b.dev), !!b.k && b.k === s.hostKey) };
+    }
+    return { error: '알 수 없는 요청입니다.' };
+  }
+
+  const realFetch = window.fetch ? window.fetch.bind(window) : null;
+  window.fetch = function (input, init) {
+    const url = typeof input === 'string' ? input : String(input && input.href || input && input.url || input);
+    if (!url.startsWith('demo:')) return realFetch(input, init);
+    const method = (init && init.method) || 'GET';
+    const out = handle(method, url, init && init.body);
+    return new Promise((res) => setTimeout(() => res({ ok: true, json: async () => JSON.parse(JSON.stringify(out)) }), 180));
+  };
+
+  // ---------- 예시 모임 만들기 (경기 진행 중인 상태로) ----------
+  function seed() {
+    const Core = window.Core;
+    const c = ctx(true, 'demo-host');
+    const d = new Date(); d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7));
+    const date = d.toISOString().slice(0, 10) + 'T07:00';
+    const s = Core.newEvent({ title: '일요일 아침 오픈코트', sport: 'pickleball', courts: 2, date, place: '대구일중 테니스장',
+      hostName: '이길봉', hostLevel: '3.5', hostLevelSelf: true, dev: 'demo-host' }, c);
+    s.note = '공과 패들은 준비되어 있습니다. 편한 운동화만 챙겨 오세요.';
+    const people = [['김도윤', '3.85', false], ['이서연', '3.0', true], ['박지호', '3.5', true], ['최하은', '4.12', false],
+      ['정우진', '2.5', true], ['강민서', '', false], ['윤채원', '4.0', true], ['임나래', '3.0', true]];
+    people.forEach(([n, lv, self], i) => Core.apply(s, { type: 'rsvp', name: n, level: lv || undefined, levelSelf: self, status: 'yes' }, ctx(false, 'demo-' + i)));
+    Core.apply(s, { type: 'rsvp', name: '한지민', status: 'no' }, ctx(false, 'demo-x'));
+    Core.apply(s, { type: 'settings', fields: { balanceLevel: true } }, c);
+    Core.apply(s, { type: 'draw' }, c);
+    Core.apply(s, { type: 'start' }, c);
+    // 1라운드 두 코트는 이미 끝난 상태로
+    const scores = [[11, 7], [9, 11]];
+    Core.allMatches(s).filter((m) => m.state === 'play').forEach((m, i) => {
+      Core.apply(s, { type: 'score', mid: m.id, sa: scores[i][0], sb: scores[i][1], by: m.a[0] }, ctx(false, ''));
+    });
+    // 지금 경기 중인 코트는 몇 분 전에 시작한 것처럼
+    Core.allMatches(s).forEach((m) => { if (m.state === 'play') { const real = Core.findMatch(s, m.id); real.startAt = Date.now() - (4 + Math.floor(Math.random() * 6)) * 60000; } });
+    db = { [s.id]: s }; persist();
+    try {
+      const host = s.players.find((p) => p.src === 'host');
+      const ev = {}; ev[s.id] = { k: s.hostKey, title: s.title, date: s.date, sport: s.sport, pid: host.id, hostPid: host.id, role: 'host', seen: Date.now() };
+      localStorage.setItem('ocdemo:events', JSON.stringify(ev));
+    } catch (e) {}
+    return s;
+  }
+
+  // ---------- 보는 사람 바꾸기 ----------
+  function current() { const ids = Object.keys(db); return ids.length ? db[ids[ids.length - 1]] : null; }
+  function viewAs(role) {
+    const oc = window.__oc, A = oc.A;
+    let s = current();
+    if (!s) s = seed();
+    A.drafts = {}; A.formErr = {}; A.tab = null; A.v = 0; A.watch = false; A.sheet = null;
+    const sheet = document.getElementById('sheet'); if (sheet) { sheet.removeAttribute('data-open'); sheet.hidden = true; }
+    document.querySelector('.app').inert = false; document.getElementById('dock').inert = false;
+    if (role === 'home') { A.eid = null; A.k = null; A.pid = null; oc.render(); window.scrollTo(0, 0); return; }
+    A.eid = s.id;
+    if (role === 'host') { A.k = s.hostKey; A.pid = (s.players.find((p) => p.src === 'host') || {}).id || null; }
+    else if (role === 'join') { A.k = null; A.pid = null; }
+    else { A.k = null; A.pid = (s.players.find((p) => p.name === role) || {}).id || null; }
+    A.loaded = false; oc.render(); oc.poll(); window.scrollTo(0, 0);
+  }
+  window.__ocGo = function (id, tab) {
+    const A = window.__oc.A;
+    let m = {}; try { m = (JSON.parse(localStorage.getItem('ocdemo:events') || '{}'))[id] || {}; } catch (e) {}
+    A.eid = id; A.k = m.k || null; A.pid = m.pid || null; A.tab = tab || null; A.v = 0; A.loaded = false; A.drafts = {};
+    const sel = document.getElementById('demo-who'); if (sel) sel.value = A.k ? 'host' : 'join';
+    window.__oc.render(); window.__oc.poll(); window.scrollTo(0, 0);
+  };
+
+  // 다른 코트 사람들이 결과를 넣은 것처럼
+  function others() {
+    const Core = window.Core, oc = window.__oc, A = oc.A;
+    const s = db[A.eid] || current();
+    if (!s || s.phase !== 'live') { oc.toast('경기 중일 때만 쓸 수 있습니다.', true); return; }
+    const playing = Core.allMatches(s).filter((m) => m.state === 'play');
+    const mine = (m) => A.pid && m.a.concat(m.b).includes(A.pid);
+    const targets = playing.filter((m) => !mine(m));
+    if (!targets.length) { oc.toast(playing.length ? '지금은 내 경기만 남았습니다. 내 결과를 넣어 보세요.' : '진행 중인 경기가 없습니다.', !playing.length); return; }
+    targets.forEach((m) => {
+      const w = Math.random() < 0.5, lose = Math.floor(Math.random() * 10);
+      Core.apply(s, { type: 'score', mid: m.id, sa: w ? 11 : lose, sb: w ? lose : 11, by: m.a[1] }, ctx(false, ''));
+    });
+    persist();
+    oc.toast(`다른 코트 ${targets.length}경기 결과가 들어왔습니다.`);
+    oc.poll();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const bar = document.getElementById('demo-bar');
+    bar.addEventListener('change', (e) => { if (e.target.id === 'demo-who') viewAs(e.target.value); });
+    bar.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.demo === 'others') others();
+      if (b.dataset.demo === 'reset') {
+        if (b.dataset.armed) { db = {}; persist(); try { localStorage.removeItem('ocdemo:events'); } catch (er) {} seed(); delete b.dataset.armed; b.textContent = '처음 상태로'; viewAs(document.getElementById('demo-who').value); window.__oc.toast('예시 모임을 처음 상태로 되돌렸습니다.'); }
+        else { b.dataset.armed = '1'; b.textContent = '한 번 더 누르면 초기화'; setTimeout(() => { delete b.dataset.armed; b.textContent = '처음 상태로'; }, 3000); }
+      }
+    });
+  });
+  window.addEventListener('load', () => {
+    if (!current()) seed();
+    viewAs(document.getElementById('demo-who').value);
+  });
+})();
+</script>
+<script>/* 오픈코트 복식 대진 엔진
+ * - rotation: 라운드마다 짝을 바꾸는 친선전 (개인 순위)
+ * - fixed   : 호스트가 정한 고정 복식 팀 리그 (팀 순위)
+ * 브라우저(window.Engine)와 Node(require) 양쪽에서 동작
+ */
+(function (root) {
+  'use strict';
+
+  // ---------- 유틸 ----------
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function shuffle(arr, rnd) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  const pk = (a, b) => (a < b ? a + '|' + b : b + '|' + a);
+  const inc = (m, k, v = 1) => m.set(k, (m.get(k) || 0) + v);
+
+  // 급수: A(5) B(4) C(3) D(2) 초심(1), 미지정은 3으로 취급
+  const LEVELS = [
+    { key: 'A', label: 'A', v: 5 },
+    { key: 'B', label: 'B', v: 4 },
+    { key: 'C', label: 'C', v: 3 },
+    { key: 'D', label: 'D', v: 2 },
+    { key: 'E', label: '초심', v: 1 },
+  ];
+  const levelValue = (lv) => (LEVELS.find((l) => l.key === lv) || { v: 3 }).v;
+
+  // 0..k-1 의 모든 완전매칭 (k 짝수)
+  const matchCache = {};
+  function matchings(k) {
+    if (matchCache[k]) return matchCache[k];
+    const res = [], used = new Array(k).fill(false), cur = [];
+    (function rec() {
+      let i = 0;
+      while (i < k && used[i]) i++;
+      if (i === k) { res.push(cur.slice()); return; }
+      used[i] = true;
+      for (let j = i + 1; j < k; j++) {
+        if (used[j]) continue;
+        used[j] = true; cur.push([i, j]);
+        rec();
+        cur.pop(); used[j] = false;
+      }
+      used[i] = false;
+    })();
+    return (matchCache[k] = res);
+  }
+
+  function combinations(arr, r, limit, rnd) {
+    // arr에서 r개 고르는 조합 (너무 많으면 무작위 limit개 표본)
+    const out = [];
+    const total = choose(arr.length, r);
+    if (total <= limit) {
+      (function rec(start, cur) {
+        if (cur.length === r) { out.push(cur.slice()); return; }
+        for (let i = start; i < arr.length; i++) { cur.push(arr[i]); rec(i + 1, cur); cur.pop(); }
+      })(0, []);
+      return out;
+    }
+    const seen = new Set();
+    let guard = 0;
+    while (out.length < limit && guard++ < limit * 20) {
+      const pick = shuffle(arr, rnd).slice(0, r);
+      const key = pick.slice().sort().join(',');
+      if (!seen.has(key)) { seen.add(key); out.push(pick); }
+    }
+    return out;
+  }
+  function choose(n, r) {
+    if (r < 0 || r > n) return 0;
+    let c = 1;
+    for (let i = 0; i < r; i++) c = (c * (n - i)) / (i + 1);
+    return Math.round(c);
+  }
+
+  // ---------- 기록 집계 ----------
+  function buildStats(rounds) {
+    const s = {
+      partner: new Map(), opp: new Map(),
+      played: new Map(), rested: new Map(), restedLast: new Set(),
+      sameCourtLast: new Set(),
+    };
+    rounds.forEach((r, idx) => {
+      const last = idx === rounds.length - 1;
+      r.matches.forEach((m) => {
+        const [a1, a2] = m.a, [b1, b2] = m.b;
+        inc(s.partner, pk(a1, a2)); inc(s.partner, pk(b1, b2));
+        [a1, a2].forEach((x) => [b1, b2].forEach((y) => inc(s.opp, pk(x, y))));
+        [a1, a2, b1, b2].forEach((p) => inc(s.played, p));
+        if (last) [a1, a2, b1, b2].forEach((p) => s.sameCourtLast.add(p));
+      });
+      (r.rest || []).forEach((p) => {
+        inc(s.rested, p);
+        if (last) s.restedLast.add(p);
+      });
+    });
+    return s;
+  }
+
+  // ---------- 로테이션: 한 라운드 ----------
+  const W = { partner: 1000, opp: 30, level: 60, restRepeat: 400 };
+
+  function bestPairing(ids, stats, levelOf, balance, rnd) {
+    const k = ids.length;
+    const P = shuffle(ids, rnd);
+    const pc = (i, j) => stats.partner.get(pk(P[i], P[j])) || 0;
+    const oc = (i, j) => stats.opp.get(pk(P[i], P[j])) || 0;
+    const lv = P.map(levelOf);
+
+    if (k > 12) return localSearchPairing(P, pc, oc, lv, balance, rnd);
+
+    const ms = shuffle(matchings(k), rnd);
+    const groupings = matchings(k / 2);
+    let best = null, bestCost = Infinity;
+    for (const m of ms) {
+      let partnerCost = 0;
+      for (const [i, j] of m) partnerCost += W.partner * pc(i, j);
+      if (partnerCost >= bestCost) continue;
+      for (const g of groupings) {
+        let cost = partnerCost;
+        for (const [x, y] of g) {
+          const [a1, a2] = m[x], [b1, b2] = m[y];
+          cost += W.opp * (oc(a1, b1) + oc(a1, b2) + oc(a2, b1) + oc(a2, b2));
+          if (balance) cost += W.level * Math.abs(lv[a1] + lv[a2] - lv[b1] - lv[b2]);
+          if (cost >= bestCost) break;
+        }
+        if (cost < bestCost) {
+          bestCost = cost;
+          best = g.map(([x, y]) => ({ a: [P[m[x][0]], P[m[x][1]]], b: [P[m[y][0]], P[m[y][1]]] }));
+        }
+      }
+    }
+    return { matches: best, cost: bestCost };
+  }
+
+  // 13명 이상이 동시에 코트에 서는 경우(코트 4면 이상) — 지역 탐색
+  function localSearchPairing(P, pc, oc, lv, balance, rnd) {
+    const k = P.length;
+    const costOf = (ord) => {
+      let c = 0;
+      for (let t = 0; t < k; t += 4) {
+        const [a1, a2, b1, b2] = [ord[t], ord[t + 1], ord[t + 2], ord[t + 3]];
+        c += W.partner * (pc(a1, a2) + pc(b1, b2));
+        c += W.opp * (oc(a1, b1) + oc(a1, b2) + oc(a2, b1) + oc(a2, b2));
+        if (balance) c += W.level * Math.abs(lv[a1] + lv[a2] - lv[b1] - lv[b2]);
+      }
+      return c;
+    };
+    let bestOrd = null, bestCost = Infinity;
+    for (let rs = 0; rs < 40; rs++) {
+      let ord = shuffle([...Array(k).keys()], rnd), cost = costOf(ord), improved = true;
+      while (improved) {
+        improved = false;
+        for (let i = 0; i < k; i++) for (let j = i + 1; j < k; j++) {
+          [ord[i], ord[j]] = [ord[j], ord[i]];
+          const c = costOf(ord);
+          if (c < cost) { cost = c; improved = true; } else [ord[i], ord[j]] = [ord[j], ord[i]];
+        }
+      }
+      if (cost < bestCost) { bestCost = cost; bestOrd = ord.slice(); }
+    }
+    const matches = [];
+    for (let t = 0; t < k; t += 4) {
+      const o = bestOrd;
+      matches.push({ a: [P[o[t]], P[o[t + 1]]], b: [P[o[t + 2]], P[o[t + 3]]] });
+    }
+    return { matches, cost: bestCost };
+  }
+
+  function nextRotationRound(presentIds, courts, history, levelOf, balance, rnd) {
+    const n = presentIds.length;
+    const used = Math.min(courts, Math.floor(n / 4));
+    if (used < 1) return null;
+    const k = used * 4, restN = n - k;
+    const stats = buildStats(history);
+
+    // 쉬는 사람 고르기: 출전 비율이 높은 사람부터 쉼 (경기 수 균등이 1순위)
+    // 직전에 쉰 사람이 또 쉬는 건 금지가 아니라 비용으로 — 금지하면 같은 4명끼리만 도는 고착이 생김
+    const rate = (p) => {
+      const pl = stats.played.get(p) || 0, rs = stats.rested.get(p) || 0;
+      return pl + rs === 0 ? -1 : pl / (pl + rs);
+    };
+    const restKey = (p) => Math.round(rate(p) * 1e6) / 1e6;
+
+    let restSets = [[]];
+    if (restN > 0) {
+      const sorted = shuffle(presentIds, rnd).sort((x, y) => restKey(y) - restKey(x));
+      const cutoff = restKey(sorted[restN - 1]);
+      const sure = sorted.filter((p) => restKey(p) > cutoff + 1e-9);
+      const tie = sorted.filter((p) => Math.abs(restKey(p) - cutoff) < 1e-9);
+      const need = restN - sure.length;
+      const lim = k >= 12 ? 8 : 24;
+      restSets = combinations(tie, need, lim, rnd).map((c) => sure.concat(c));
+    }
+
+    let best = null;
+    for (const rest of restSets) {
+      const restSet = new Set(rest);
+      const act = presentIds.filter((p) => !restSet.has(p));
+      const r = bestPairing(act, stats, levelOf, balance, rnd);
+      const restCost = rest.filter((p) => stats.restedLast.has(p)).length * W.restRepeat;
+      const cost = r.cost + restCost;
+      if (!best || cost < best.cost) best = { ...r, cost, rest };
+    }
+    return {
+      matches: best.matches.map((m, i) => ({ court: i + 1, a: m.a, b: m.b, sa: null, sb: null })),
+      rest: best.rest,
+    };
+  }
+
+  // ---------- 고정 복식: 팀 리그 ----------
+  function circleOrder(teamIds) {
+    let t = teamIds.slice();
+    if (t.length % 2) t.push(null);
+    const n = t.length, list = [];
+    for (let r = 0; r < n - 1; r++) {
+      for (let i = 0; i < n / 2; i++) {
+        const a = t[i], b = t[n - 1 - i];
+        if (a != null && b != null) list.push([a, b]);
+      }
+      t = [t[0], t[n - 1]].concat(t.slice(1, n - 1));
+    }
+    return list;
+  }
+
+  function planFixed(event, lockedRounds) {
+    const teams = event.teams.filter((t) => t.p.every((p) => isPresent(event, p)));
+    const teamOf = {};
+    teams.forEach((t) => (teamOf[t.id] = t));
+    const done = new Set();
+    const games = new Map(), restedLast = new Set();
+    lockedRounds.forEach((r, idx) => {
+      r.matches.forEach((m) => {
+        done.add(pk(m.ta, m.tb)); inc(games, m.ta); inc(games, m.tb);
+      });
+      if (idx === lockedRounds.length - 1) (r.restTeams || []).forEach((t) => restedLast.add(t));
+    });
+    let remaining = circleOrder(teams.map((t) => t.id)).filter(([a, b]) => !done.has(pk(a, b)));
+    const out = [];
+    const C = Math.min(event.courts, Math.floor(teams.length / 2));
+    if (C < 1) return out;
+    let lastRest = restedLast;
+    while (remaining.length) {
+      const order = remaining
+        .map((m, i) => ({ m, i }))
+        .sort((x, y) => {
+          const pri = (mm) => (games.get(mm[0]) || 0) + (games.get(mm[1]) || 0)
+            - 3 * ((lastRest.has(mm[0]) ? 1 : 0) + (lastRest.has(mm[1]) ? 1 : 0));
+          return pri(x.m) - pri(y.m) || x.i - y.i;
+        });
+      const busy = new Set(), pick = [];
+      for (const { m, i } of order) {
+        if (pick.length >= C) break;
+        if (busy.has(m[0]) || busy.has(m[1])) continue;
+        busy.add(m[0]); busy.add(m[1]); pick.push(i);
+      }
+      const ms = pick.map((i) => remaining[i]);
+      remaining = remaining.filter((_, i) => !pick.includes(i));
+      ms.forEach(([a, b]) => { inc(games, a); inc(games, b); });
+      const restTeams = teams.map((t) => t.id).filter((t) => !busy.has(t));
+      lastRest = new Set(restTeams);
+      out.push({
+        matches: ms.map(([a, b], i) => ({
+          court: i + 1, ta: a, tb: b, a: teamOf[a].p.slice(), b: teamOf[b].p.slice(), sa: null, sb: null,
+        })),
+        restTeams,
+        rest: restTeams.flatMap((t) => teamOf[t].p),
+      });
+    }
+    return out;
+  }
+
+  // ---------- 공통 ----------
+  function isPresent(event, pid) {
+    const p = event.players.find((x) => x.id === pid);
+    return !!(p && p.present);
+  }
+  // 결과가 있거나, 코트에 배정되어 진행 중인 경기가 하나라도 있으면 그 라운드는 고정
+  const isLocked = (r) => r.locked || r.matches.some((m) => m.sa != null || (m.state && m.state !== 'wait'));
+
+  // 점수가 하나라도 들어간 라운드까지는 그대로 두고, 그 뒤만 다시 짠다
+  function splitLocked(rounds) {
+    let last = -1;
+    rounds.forEach((r, i) => { if (isLocked(r)) last = i; });
+    return rounds.slice(0, last + 1);
+  }
+
+  function scheduleScore(rounds, presentIds, levelOf, balance) {
+    const s = buildStats(rounds);
+    let repeat = 0, oppSq = 0, lvl = 0, consecRest = 0;
+    s.partner.forEach((c) => { if (c > 1) repeat += c - 1; });
+    s.opp.forEach((c) => { oppSq += c * c; });
+    const pl = presentIds.map((p) => s.played.get(p) || 0);
+    const spread = pl.length ? Math.max(...pl) - Math.min(...pl) : 0;
+    for (let i = 1; i < rounds.length; i++) {
+      const prev = new Set(rounds[i - 1].rest || []);
+      (rounds[i].rest || []).forEach((p) => { if (prev.has(p)) consecRest++; });
+    }
+    if (balance) rounds.forEach((r) => r.matches.forEach((m) => {
+      lvl += Math.abs(levelOf(m.a[0]) + levelOf(m.a[1]) - levelOf(m.b[0]) - levelOf(m.b[1]));
+    }));
+    return {
+      total: repeat * 1000 + spread * 500 + consecRest * 400 + oppSq * 2 + lvl * 20,
+      repeat, spread, consecRest, oppSq, lvl,
+    };
+  }
+
+  /**
+   * plan(event, opts) → 새 rounds 배열
+   * opts.rounds: 로테이션 총 라운드 수 (기본: 추천값)
+   * opts.restarts: 전체 일정 재시도 횟수 (가장 공평한 일정 채택)
+   */
+  function plan(event, opts = {}) {
+    const locked = splitLocked(event.rounds || []);
+    // 종목별 실력 환산은 호출하는 쪽(core)이 넘겨줌. 없으면 기본 급수표 사용
+    const levelOf = opts.levelOf || ((pid) => {
+      const p = event.players.find((x) => x.id === pid);
+      return levelValue(p && p.level);
+    });
+    const seed = opts.seed != null ? opts.seed : (Date.now() & 0xffffffff);
+
+    if (event.mode === 'fixed') {
+      const fut = planFixed(event, locked);
+      return locked.concat(fut).map((r, i) => ({ ...r, no: i + 1 }));
+    }
+
+    const present = event.players.filter((p) => p.present).map((p) => p.id);
+    const total = opts.rounds || recommendRounds(present.length, event.courts).rounds;
+    const need = Math.max(0, total - locked.length);
+    const balance = !!event.balanceLevel;
+    const restarts = opts.restarts || defaultRestarts(present.length, event.courts);
+
+    let best = null;
+    for (let t = 0; t < restarts; t++) {
+      const rnd = mulberry32(seed + t * 7919);
+      const rounds = locked.slice();
+      for (let i = 0; i < need; i++) {
+        const r = nextRotationRound(present, event.courts, rounds, levelOf, balance, rnd);
+        if (!r) break;
+        rounds.push(r);
+      }
+      const sc = scheduleScore(rounds, present, levelOf, balance);
+      if (!best || sc.total < best.sc.total) best = { rounds, sc };
+      if (sc.total === 0) break;
+    }
+    return best.rounds.map((r, i) => ({ ...r, no: i + 1 }));
+  }
+
+  function defaultRestarts(n, courts) {
+    const k = Math.min(courts, Math.floor(n / 4)) * 4;
+    if (k >= 12) return 6;
+    if (k >= 8) return 30;
+    return 60;
+  }
+
+  // 모두가 한 번씩 짝이 되려면 몇 라운드가 필요한가
+  function recommendRounds(n, courts) {
+    const used = Math.min(courts, Math.floor(n / 4));
+    if (used < 1) return { rounds: 0, used: 0, perRoundRest: n, gamesEach: 0 };
+    const pairs = (n * (n - 1)) / 2;               // 가능한 짝 수
+    const rounds = Math.ceil(pairs / (2 * used));   // 한 경기에 짝 2개 소화
+    return {
+      rounds, used, perRoundRest: n - used * 4,
+      gamesEach: +((rounds * used * 4) / n).toFixed(1),
+    };
+  }
+
+  // ---------- 순위 ----------
+  function standings(event) {
+    const rows = new Map();
+    const fixed = event.mode === 'fixed';
+    const ensure = (id, name) => {
+      if (!rows.has(id)) rows.set(id, { id, name, g: 0, w: 0, l: 0, pf: 0, pa: 0 });
+      return rows.get(id);
+    };
+    const nameOf = (pid) => (event.players.find((p) => p.id === pid) || { name: '?' }).name;
+    const teamName = (tid) => {
+      const t = event.teams.find((x) => x.id === tid);
+      return t ? t.p.map(nameOf).join(' · ') : '?';
+    };
+    if (fixed) event.teams.forEach((t) => ensure(t.id, teamName(t.id)));
+    else event.players.filter((p) => p.present || hasPlayed(event, p.id)).forEach((p) => ensure(p.id, p.name));
+
+    (event.rounds || []).forEach((r) => r.matches.forEach((m) => {
+      if (m.sa == null || m.sb == null) return;
+      const sides = fixed ? [[m.ta], [m.tb]] : [m.a, m.b];
+      const sc = [m.sa, m.sb];
+      [0, 1].forEach((s) => sides[s].forEach((id) => {
+        const row = ensure(id, fixed ? teamName(id) : nameOf(id));
+        row.g++; row.pf += sc[s]; row.pa += sc[1 - s];
+        if (sc[s] > sc[1 - s]) row.w++; else row.l++;
+      }));
+    }));
+
+    const list = [...rows.values()].map((r) => ({
+      ...r, diff: r.pf - r.pa, rate: r.g ? r.w / r.g : 0,
+    }));
+    list.sort((a, b) => b.rate - a.rate || b.diff - a.diff || b.pf - a.pf || a.name.localeCompare(b.name, 'ko'));
+    list.forEach((r, i) => {
+      const prev = list[i - 1];
+      r.rank = prev && prev.rate === r.rate && prev.diff === r.diff && prev.pf === r.pf ? prev.rank : i + 1;
+    });
+    return list;
+  }
+  function hasPlayed(event, pid) {
+    return (event.rounds || []).some((r) => r.matches.some((m) => m.sa != null && (m.a.includes(pid) || m.b.includes(pid))));
+  }
+
+  const Engine = {
+    LEVELS, levelValue, plan, standings, recommendRounds, buildStats, scheduleScore, isLocked, pk,
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = Engine;
+  else root.Engine = Engine;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* 오픈코트 진행 로직 (서버 = 앱스크립트, 화면 = PWA 가 같은 코드를 씀)
+ *
+ * 상태(state) 하나에 모임 전체가 들어 있고, 모든 변경은 apply(state, action, ctx) 로만 일어난다.
+ * phase: rsvp(참석 응답) → ready(대진 완료) → live(경기 중) → done(종료)
+ * 경기(match) state: wait(대기) → play(코트 배정, 진행 중) → done(결과 입력) / void(취소)
+ */
+(function (root) {
+  'use strict';
+  const Engine = root.Engine || (typeof require !== 'undefined' ? require('./engine.js') : null);
+
+  const SPORTS = {
+    pickleball: { label: '피클볼', target: 11, minutes: 12, cap: null, levelKind: 'dupr' },
+    badminton:  { label: '배드민턴', target: 21, minutes: 15, cap: 30, levelKind: 'grade' },
+  };
+  const GRADES = [
+    { k: 'E', label: '초심', v: 1 }, { k: 'D', label: 'D', v: 2 }, { k: 'C', label: 'C', v: 3 },
+    { k: 'B', label: 'B', v: 4 }, { k: 'A', label: 'A', v: 5 }, { k: 'S', label: '자강', v: 6 },
+  ];
+  const SELF_DUPR = ['2.0', '2.5', '3.0', '3.5', '4.0', '4.5', '5.0'];
+
+  // ---------- 실력 ----------
+  function levelLabel(sport, p) {
+    if (!p || !p.level) return '';
+    if (SPORTS[sport].levelKind === 'grade') {
+      const g = GRADES.find((x) => x.k === p.level);
+      return g ? g.label : '';
+    }
+    return p.levelSelf ? `${p.level} 자가` : `DUPR ${p.level}`;
+  }
+  function levelNum(sport, p) {
+    if (!p || !p.level) return null;
+    if (SPORTS[sport].levelKind === 'grade') {
+      const g = GRADES.find((x) => x.k === p.level);
+      return g ? g.v : null;
+    }
+    const n = parseFloat(p.level);
+    return isFinite(n) ? n * 2 : null; // DUPR 0.5 차이 = 급수 1단계로 취급
+  }
+  function cleanLevel(sport, level) {
+    if (level == null || level === '') return '';
+    if (SPORTS[sport].levelKind === 'grade') return GRADES.some((g) => g.k === level) ? level : '';
+    const n = parseFloat(level);
+    if (!isFinite(n) || n < 1 || n > 8.5) return '';
+    return String(Math.round(n * 1000) / 1000);
+  }
+  function makeLevelOf(state) {
+    const known = state.players.map((p) => levelNum(state.sport, p)).filter((v) => v != null).sort((a, b) => a - b);
+    const median = known.length ? known[Math.floor(known.length / 2)] : 3;
+    const map = {};
+    state.players.forEach((p) => { const v = levelNum(state.sport, p); map[p.id] = v == null ? median : v; });
+    return (pid) => (map[pid] != null ? map[pid] : median);
+  }
+
+  // ---------- 생성 ----------
+  function clampInt(v, lo, hi, dflt) {
+    const n = parseInt(v, 10);
+    return isFinite(n) ? Math.max(lo, Math.min(hi, n)) : dflt;
+  }
+  function str(v, max) { return String(v == null ? '' : v).trim().slice(0, max); }
+
+  function newEvent(input, ctx) {
+    const sport = SPORTS[input.sport] ? input.sport : 'pickleball';
+    const s = {
+      id: ctx.id(8), hostKey: ctx.id(14), v: 1, created: ctx.now,
+      title: str(input.title, 40) || '오픈코트',
+      date: str(input.date, 20), place: str(input.place, 40), note: str(input.note, 200),
+      sport, courts: clampInt(input.courts, 1, 8, 2), mode: input.mode === 'fixed' ? 'fixed' : 'rotation',
+      target: clampInt(input.target, 5, 31, SPORTS[sport].target),
+      minutes: clampInt(input.minutes, 5, 40, SPORTS[sport].minutes),
+      balanceLevel: !!input.balanceLevel, totalRounds: null,
+      phase: 'rsvp', dirty: false, players: [], teams: [], rounds: [], cohosts: [],
+    };
+    if (input.hostName) {
+      s.players.push({ id: ctx.id(6), name: str(input.hostName, 16), level: cleanLevel(sport, input.hostLevel),
+        levelSelf: !!input.hostLevelSelf, status: 'yes', src: 'host', present: true, dev: str(input.dev, 40) });
+    }
+    return s;
+  }
+
+  // ---------- 조회용 계산 ----------
+  const allMatches = (s) => s.rounds.flatMap((r, ri) => r.matches.map((m) => Object.assign({ ri }, m)));
+  const findMatch = (s, mid) => {
+    for (const r of s.rounds) for (const m of r.matches) if (m.id === mid) return m;
+    return null;
+  };
+  const presentSet = (s) => new Set(s.players.filter((p) => p.present).map((p) => p.id));
+  const playersOf = (m) => m.a.concat(m.b);
+  const totalRounds = (s) => s.totalRounds || Engine.recommendRounds(s.players.filter((p) => p.present).length, s.courts).rounds;
+
+  // 진행 가능한 가장 앞 라운드 (취소·불참자 포함 경기는 건너뜀)
+  function frontRound(s) {
+    const pres = presentSet(s);
+    return s.rounds.findIndex((r) => r.matches.some((m) =>
+      m.state === 'play' || (m.state === 'wait' && playersOf(m).every((p) => pres.has(p)))));
+  }
+
+  // 비는 코트에 다음 경기를 자동 배정 (현재 라운드와 바로 다음 라운드까지만 당겨 씀)
+  function assign(s, ctx) {
+    if (s.phase !== 'live') return 0;
+    const busy = new Set(), courtBusy = new Set(), pres = presentSet(s);
+    allMatches(s).forEach((m) => {
+      if (m.state === 'play') { playersOf(m).forEach((p) => busy.add(p)); courtBusy.add(m.court); }
+    });
+    const fr = frontRound(s);
+    if (fr < 0) return 0;
+    let n = 0;
+    for (let ri = fr; ri <= fr + 1 && ri < s.rounds.length; ri++) {
+      for (const m of s.rounds[ri].matches) {
+        if (m.state !== 'wait') continue;
+        const ps = playersOf(m);
+        if (ps.some((p) => busy.has(p) || !pres.has(p))) continue;
+        let c = null;
+        if (m.court && m.court <= s.courts && !courtBusy.has(m.court)) c = m.court;
+        else for (let k = 1; k <= s.courts; k++) if (!courtBusy.has(k)) { c = k; break; }
+        if (c == null) return n;
+        m.state = 'play'; m.court = c; m.startAt = ctx.now;
+        courtBusy.add(c); ps.forEach((p) => busy.add(p)); n++;
+      }
+    }
+    return n;
+  }
+
+  function draw(s, ctx) {
+    // 진행 중에 다시 짜는 경우: 이미 시작했거나 끝난 경기가 있는 라운드는 남기고,
+    // 그 안에서도 아직 시작 안 한 경기에 불참자가 있으면 취소 처리
+    const pres = presentSet(s);
+    s.rounds.forEach((r) => {
+      if (!Engine.isLocked(r)) return;
+      r.matches.forEach((m) => {
+        if (m.state === 'wait' && playersOf(m).some((p) => !pres.has(p))) m.state = 'void';
+      });
+    });
+    const ev = { mode: s.mode, courts: s.courts, balanceLevel: s.balanceLevel, players: s.players, teams: s.teams, rounds: s.rounds };
+    const opts = { levelOf: makeLevelOf(s) };
+    if (s.mode === 'rotation') opts.rounds = totalRounds(s);
+    const rounds = Engine.plan(ev, opts);
+    rounds.forEach((r) => r.matches.forEach((m) => {
+      if (!m.id) m.id = ctx.id(6);
+      if (!m.state) m.state = 'wait';
+    }));
+    s.rounds = rounds;
+    s.dirty = false;
+    if (s.phase === 'rsvp') s.phase = 'ready';
+    assign(s, ctx);
+  }
+
+  function markDirty(s) { if (s.rounds.length && s.phase !== 'done') s.dirty = true; }
+
+  // ---------- 동작 ----------
+  const HOST_ONLY = new Set(['settings', 'addPlayer', 'setPlayer', 'removePlayer', 'setTeams', 'draw', 'start', 'finish', 'reopen', 'reset', 'voidMatch', 'setCohost']);
+
+  // 호스트 판별: 만든 사람의 호스트 키(또는 공동 호스트 링크)를 가졌거나,
+  // 지정된 호스트이면서 그 사람이 초대 링크로 응답했던 바로 그 폰인 경우
+  function hostCheck(s, key, dev) {
+    if (key && key === s.hostKey) return true;
+    if (!dev) return false;
+    const p = s.players.find((x) => x.dev && x.dev === dev);
+    return !!(p && (s.cohosts || []).includes(p.id));
+  }
+
+  function err(msg) { return { error: msg }; }
+
+  /** apply(state, action, ctx) → { ok:true } 또는 { error } (state 는 제자리 수정)
+   *  ctx: { now, id(len), isHost, dev } */
+  function apply(s, a, ctx) {
+    if (HOST_ONLY.has(a.type) && !ctx.isHost) return err('호스트만 할 수 있는 작업입니다.');
+    const P = (pid) => s.players.find((p) => p.id === pid);
+    let r;
+    switch (a.type) {
+      case 'rsvp': r = rsvp(s, a, ctx); break;
+      case 'settings': r = settings(s, a); break;
+      case 'addPlayer': {
+        const name = str(a.name, 16);
+        if (!name) return err('이름을 입력하세요.');
+        if (s.players.some((p) => p.name === name)) return err(`${name} 님은 이미 명단에 있습니다.`);
+        const p = { id: ctx.id(6), name, level: cleanLevel(s.sport, a.level), levelSelf: !!a.levelSelf, status: 'yes', src: 'walkin', present: true, dev: '' };
+        s.players.push(p); markDirty(s); r = { ok: true, pid: p.id };
+        break;
+      }
+      case 'setPlayer': {
+        const p = P(a.pid); if (!p) return err('없는 참가자입니다.');
+        if (a.present != null && p.present !== !!a.present) { p.present = !!a.present; markDirty(s); }
+        if (a.level !== undefined) { p.level = cleanLevel(s.sport, a.level); p.levelSelf = !!a.levelSelf; if (s.balanceLevel) markDirty(s); }
+        if (a.name) { const n = str(a.name, 16); if (n && !s.players.some((q) => q !== p && q.name === n)) p.name = n; }
+        r = { ok: true }; break;
+      }
+      case 'removePlayer': {
+        const played = allMatches(s).some((m) => m.state !== 'wait' && m.state !== 'void' && playersOf(m).includes(a.pid));
+        if (played) { const p = P(a.pid); if (p) p.present = false; }
+        else { s.players = s.players.filter((p) => p.id !== a.pid); s.teams = s.teams.filter((t) => !t.p.includes(a.pid)); }
+        markDirty(s); r = { ok: true }; break;
+      }
+      case 'setTeams': {
+        const ids = new Set(s.players.map((p) => p.id)), used = new Set();
+        const teams = [];
+        for (const t of (a.teams || [])) {
+          if (!Array.isArray(t) || t.length !== 2 || t[0] === t[1] || !ids.has(t[0]) || !ids.has(t[1]) || used.has(t[0]) || used.has(t[1])) continue;
+          used.add(t[0]); used.add(t[1]);
+          const old = s.teams.find((x) => x.p.includes(t[0]) && x.p.includes(t[1]));
+          teams.push({ id: old ? old.id : ctx.id(6), p: [t[0], t[1]] });
+        }
+        s.teams = teams; markDirty(s); r = { ok: true }; break;
+      }
+      case 'draw': {
+        if (s.phase === 'done') return err('종료된 모임입니다.');
+        const n = s.players.filter((p) => p.present).length;
+        if (s.mode === 'rotation' && n < 4) return err('참석자가 4명 이상이어야 대진을 짤 수 있습니다.');
+        if (s.mode === 'fixed' && s.teams.filter((t) => t.p.every((id) => (P(id) || {}).present)).length < 2) return err('팀이 2개 이상 있어야 합니다.');
+        if (a.fresh && s.phase !== 'live') s.rounds = [];
+        draw(s, ctx); r = { ok: true }; break;
+      }
+      case 'start':
+        if (!s.rounds.length) return err('먼저 대진을 짜세요.');
+        s.phase = 'live'; s.startedAt = s.startedAt || ctx.now; assign(s, ctx); r = { ok: true }; break;
+      case 'score': r = score(s, a, ctx); break;
+      case 'voidMatch': {
+        const m = findMatch(s, a.mid); if (!m) return err('없는 경기입니다.');
+        if (m.state === 'done') return err('결과가 들어간 경기는 취소할 수 없습니다. 점수를 고치세요.');
+        m.state = 'void'; assign(s, ctx); r = { ok: true }; break;
+      }
+      case 'finish': s.phase = 'done'; s.finishedAt = ctx.now; r = { ok: true }; break;
+      case 'reopen': s.phase = 'live'; assign(s, ctx); r = { ok: true }; break;
+      case 'setCohost': {
+        const p = P(a.pid); if (!p) return err('없는 참가자입니다.');
+        s.cohosts = s.cohosts || [];
+        if (a.on) {
+          if (!p.dev) return err(`${p.name} 님은 아직 자기 폰으로 응답하지 않았습니다. 초대 링크를 열어 자기 이름을 누르면 지정할 수 있습니다.`);
+          if (!s.cohosts.includes(p.id)) s.cohosts.push(p.id);
+        } else {
+          s.cohosts = s.cohosts.filter((id) => id !== p.id);
+        }
+        r = { ok: true }; break;
+      }
+      case 'reset':
+        if (s.phase === 'live' || s.phase === 'done') {
+          if (allMatches(s).some((m) => m.state === 'done') && !a.force) return err('결과가 있는 경기는 지울 수 없습니다.');
+        }
+        s.rounds = []; s.phase = 'rsvp'; s.dirty = false; r = { ok: true }; break;
+      default: return err('알 수 없는 요청입니다.');
+    }
+    if (r && !r.error) s.v = (s.v || 0) + 1;
+    return r;
+  }
+
+  function rsvp(s, a, ctx) {
+    if (s.phase === 'done') return err('이미 종료된 모임입니다.');
+    const name = str(a.name, 16);
+    let p = a.pid ? s.players.find((x) => x.id === a.pid) : null;
+    if (!p && name) {
+      const same = s.players.find((x) => x.name === name);
+      if (same) {
+        // 같은 이름: 호스트가 미리 넣어 둔 이름이거나, 같은 폰이면 본인으로 보고 이어 씀
+        if (!same.dev || same.dev === ctx.dev) p = same;
+        else return err(`${name} 님은 이미 다른 폰에서 응답했습니다. 이름 뒤에 구분할 글자를 붙여 주세요.`);
+      }
+    }
+    if (!p) {
+      if (!name) return err('이름을 입력하세요.');
+      p = { id: ctx.id(6), name, level: '', levelSelf: false, status: 'yes', src: 'invite', present: false, dev: '' };
+      s.players.push(p);
+      if (a.status === undefined) a.status = 'yes';
+    }
+    if (ctx.dev && !p.dev) p.dev = ctx.dev;
+    if (a.level !== undefined) { p.level = cleanLevel(s.sport, a.level); p.levelSelf = !!a.levelSelf; }
+    if (a.status === 'yes' || a.status === 'no') {
+      p.status = a.status;
+      const was = p.present;
+      p.present = a.status === 'yes';
+      if (was !== p.present) markDirty(s);
+    }
+    return { ok: true, pid: p.id };
+  }
+
+  function settings(s, a) {
+    const f = a.fields || {};
+    if (f.title !== undefined) s.title = str(f.title, 40) || s.title;
+    if (f.date !== undefined) s.date = str(f.date, 20);
+    if (f.place !== undefined) s.place = str(f.place, 40);
+    if (f.note !== undefined) s.note = str(f.note, 200);
+    if (f.sport && SPORTS[f.sport] && f.sport !== s.sport) {
+      const was = SPORTS[s.sport];
+      s.sport = f.sport;
+      if (s.target === was.target) s.target = SPORTS[f.sport].target;
+      if (s.minutes === was.minutes) s.minutes = SPORTS[f.sport].minutes;
+      s.players.forEach((p) => { p.level = ''; p.levelSelf = false; }); // 급수 ↔ DUPR 은 호환 안 됨
+      markDirty(s);
+    }
+    if (f.courts !== undefined) { s.courts = clampInt(f.courts, 1, 8, s.courts); markDirty(s); }
+    if (f.mode && (f.mode === 'fixed' || f.mode === 'rotation') && f.mode !== s.mode) {
+      if (s.phase === 'live' || s.phase === 'done') return err('경기 중에는 방식을 바꿀 수 없습니다.');
+      s.mode = f.mode; s.rounds = []; s.phase = 'rsvp'; s.dirty = false;
+    }
+    if (f.target !== undefined) s.target = clampInt(f.target, 5, 31, s.target);
+    if (f.minutes !== undefined) s.minutes = clampInt(f.minutes, 5, 40, s.minutes);
+    if (f.balanceLevel !== undefined) { s.balanceLevel = !!f.balanceLevel; markDirty(s); }
+    if (f.totalRounds !== undefined) { s.totalRounds = f.totalRounds == null ? null : clampInt(f.totalRounds, 1, 40, null); markDirty(s); }
+    return { ok: true };
+  }
+
+  function score(s, a, ctx) {
+    if (s.phase !== 'live' && !(ctx.isHost && s.phase === 'done')) return err('경기 중일 때만 결과를 넣을 수 있습니다.');
+    const m = findMatch(s, a.mid);
+    if (!m) return err('없는 경기입니다.');
+    if (m.state === 'void') return err('취소된 경기입니다.');
+    if (m.state === 'wait' && !ctx.isHost) return err('아직 시작하지 않은 경기입니다.');
+    const sa = parseInt(a.sa, 10), sb = parseInt(a.sb, 10);
+    if (!isFinite(sa) || !isFinite(sb) || sa < 0 || sb < 0 || sa > 99 || sb > 99) return err('점수를 확인해 주세요.');
+    if (sa === sb) return err('동점은 입력할 수 없습니다. 이긴 팀을 정해 주세요.');
+    // 호스트는 모든 경기, 참가자는 자기 경기만. 참가자는 보낸 값이 아니라 '초대 링크로 응답한 폰'으로 서버가 직접 확인
+    let by;
+    if (ctx.isHost) by = a.by && s.players.some((p) => p.id === a.by) ? a.by : 'host';
+    else {
+      const me = ctx.dev ? s.players.find((p) => p.dev && p.dev === ctx.dev) : null;
+      if (!me || !playersOf(m).includes(me.id)) return err('자기 경기 결과만 넣을 수 있습니다. 다른 경기는 호스트에게 부탁해 주세요.');
+      by = me.id;
+    }
+    const wasDone = m.state === 'done';
+    // 같은 코트 사람들이 거의 동시에 누른 경우: 먼저 들어간 결과를 지키고, 고치기는 명시적으로만
+    if (wasDone && !a.edit) {
+      const who = m.by === 'host' ? '호스트' : ((s.players.find((p) => p.id === m.by) || {}).name || '다른 사람');
+      return err(`${who} 님이 이미 결과를 넣었습니다 (${m.sa}:${m.sb}). 틀렸다면 기록에서 눌러 고쳐 주세요.`);
+    }
+    m.sa = sa; m.sb = sb; m.state = 'done'; m.by = by; m.at = ctx.now;
+    if (wasDone) m.edited = true;
+    if (!m.court) m.court = 1;
+    assign(s, ctx);
+    return { ok: true };
+  }
+
+  // ---------- 화면용 요약 ----------
+  // 참가자 한 명의 시점: 지금 경기, 다음 경기, 쉬는 중인지
+  function myView(s, pid) {
+    const name = (id) => (s.players.find((p) => p.id === id) || { name: '?' }).name;
+    const ms = allMatches(s).filter((m) => m.state !== 'void' && playersOf(m).includes(pid));
+    const done = ms.filter((m) => m.state === 'done');
+    const pending = ms.filter((m) => m.state !== 'done');
+    const side = (m) => (m.a.includes(pid) ? 'a' : 'b');
+    const describe = (m) => {
+      const my = m[side(m)], op = m[side(m) === 'a' ? 'b' : 'a'];
+      return { id: m.id, round: m.ri + 1, court: m.court, state: m.state, side: side(m),
+        partner: my.find((x) => x !== pid), opponents: op, match: m };
+    };
+    const current = pending.find((m) => m.state === 'play');
+    const next = pending.find((m) => m.state === 'wait');
+    let wait = null;
+    if (!current && next) {
+      // 왜 아직 못 하는지: 같이 뛸 사람이 다른 코트에서 경기 중이거나, 코트가 꽉 찼거나, 라운드 차례가 아님
+      const playing = allMatches(s).filter((m) => m.state === 'play');
+      const busy = new Map();
+      playing.forEach((m) => playersOf(m).forEach((p) => busy.set(p, m.court)));
+      const blockers = playersOf(next).filter((p) => p !== pid && busy.has(p)).map((p) => ({ id: p, name: name(p), court: busy.get(p) }));
+      const fr = frontRound(s);
+      const resting = next.ri > fr + 1 || (fr >= 0 && (s.rounds[fr].rest || []).includes(pid) && next.ri > fr);
+      wait = { blockers, courtsFull: playing.length >= s.courts, resting, ahead: Math.max(0, next.ri - Math.max(fr, 0)) };
+    }
+    let w = 0, l = 0, pf = 0, pa = 0;
+    done.forEach((m) => {
+      const mine = side(m) === 'a' ? m.sa : m.sb, theirs = side(m) === 'a' ? m.sb : m.sa;
+      pf += mine; pa += theirs; if (mine > theirs) w++; else l++;
+    });
+    return {
+      current: current ? describe(current) : null,
+      next: next ? describe(next) : null,
+      after: pending.filter((m) => m !== current && m !== next).slice(0, 2).map(describe),
+      wait, record: { w, l, g: done.length, diff: pf - pa }, remaining: pending.length,
+      history: done.map(describe),
+    };
+  }
+
+  // 전체 코트 현황과 다음 대기 경기들
+  function boardView(s) {
+    const courts = [];
+    for (let c = 1; c <= s.courts; c++) courts.push({ court: c, match: null });
+    const playing = allMatches(s).filter((m) => m.state === 'play');
+    playing.forEach((m) => { const slot = courts.find((x) => x.court === m.court); if (slot && !slot.match) slot.match = m; else courts.push({ court: m.court, match: m }); });
+    const queue = allMatches(s).filter((m) => m.state === 'wait');
+    const done = allMatches(s).filter((m) => m.state === 'done');
+    return { courts, queue, doneCount: done.length, total: done.length + queue.length + playing.length };
+  }
+
+  // 남에게 보낼 때 호스트 키와 기기 식별값은 뺀다
+  // viaKey: 호스트 키로 들어온 사람에게만 키를 돌려준다 (지정 호스트는 해제되면 권한이 바로 사라지도록 키를 주지 않음)
+  function publicState(s, isHost, viaKey) {
+    const c = JSON.parse(JSON.stringify(s));
+    if (!viaKey) delete c.hostKey;
+    c.cohosts = c.cohosts || [];
+    c.youHost = !!isHost;
+    c.players.forEach((p) => { p.claimed = !!p.dev; delete p.dev; });
+    return c;
+  }
+
+  const Core = {
+    SPORTS, GRADES, SELF_DUPR, levelLabel, levelNum, cleanLevel, makeLevelOf,
+    newEvent, apply, assign, hostCheck, myView, boardView, publicState, allMatches, findMatch, totalRounds, frontRound,
+    standings: (s) => Engine.standings(s),
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = Core;
+  else root.Core = Core;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+(function () {
+'use strict';
+
+/* ▼ 배포 후 앱스크립트 웹 앱 주소(…/exec)를 따옴표 안에 넣으세요 */
+const API_URL = 'demo://exec';
+
+const QS = new URLSearchParams(location.search);
+const LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
+const API = (LOCAL && QS.get('api')) || API_URL;
+const POLL_MS = 4000;
+
+// ---------- 저장 ----------
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+};
+const DEV = store.get('ocdemo:dev') || (() => { const d = 'd' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36).slice(-3); store.set('ocdemo:dev', d); return d; })();
+const mem = () => store.get('ocdemo:events', {});
+function remember(id, patch) { const m = mem(); m[id] = Object.assign({}, m[id] || {}, patch, { seen: Date.now() }); store.set('ocdemo:events', m); }
+
+// ---------- 상태 ----------
+const A = {
+  eid: QS.get('e'), k: null, pid: null, s: null, v: 0,
+  tab: (location.hash || '').slice(1) || null, sheet: null, net: 'ok', busy: null,
+  armed: null, drafts: {}, watch: false, loaded: false, err: null, formErr: {},
+};
+if (A.eid) {
+  const m = mem()[A.eid] || {};
+  A.k = QS.get('k') || m.k || null;
+  A.pid = m.pid || null;
+  A.watch = !!m.watch;
+  if (QS.get('k')) { remember(A.eid, { k: A.k, role: 'host' }); history.replaceState(null, '', location.pathname + '?e=' + encodeURIComponent(A.eid) + (LOCAL && QS.get('api') ? '&api=' + encodeURIComponent(QS.get('api')) : '') + location.hash); }
+}
+
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const S = () => A.s;
+const SP = () => Core.SPORTS[S().sport];
+// 서버가 판별 (호스트 키 또는 지정된 호스트의 폰). 예전 서버(youHost 없음)와도 호환
+const isHost = () => !!S() && (S().youHost != null ? !!S().youHost : (!!A.k && S().hostKey === A.k));
+const byId = (id) => S().players.find((p) => p.id === id);
+const nm = (id) => (byId(id) || { name: '?' }).name;
+const me = () => (A.pid ? byId(A.pid) : null);
+const lvl = (p) => Core.levelLabel(S().sport, p);
+const PHASE = { rsvp: '참석 받는 중', ready: '대진 완료', live: '경기 중', done: '종료' };
+
+const DTF = new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric', weekday: 'short', hour: 'numeric', minute: '2-digit' });
+const DF = new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
+function fmtDate(v) {
+  if (!v) return '';
+  const hasTime = v.includes('T');
+  const d = new Date(hasTime ? v : v + 'T00:00');
+  return isNaN(d) ? v : (hasTime ? DTF : DF).format(d);
+}
+const NF = new Intl.NumberFormat('ko-KR');
+function fmtMin(m) { const h = Math.floor(m / 60), r = m % 60; return h ? `${h}시간${r ? ' ' + r + '분' : ''}` : `${r}분`; }
+function ago(ts) { const m = Math.max(0, Math.round((Date.now() - ts) / 60000)); return m < 1 ? '방금 시작' : `${m}분째`; }
+const signed = (n) => (n > 0 ? '+' : '') + n;
+
+// ---------- 서버 통신 ----------
+async function getState() {
+  const u = new URL(API);
+  u.searchParams.set('a', 'state'); u.searchParams.set('e', A.eid);
+  if (A.v) u.searchParams.set('v', A.v);
+  if (A.k) u.searchParams.set('k', A.k);
+  u.searchParams.set('dev', DEV);
+  const r = await fetch(u, { cache: 'no-store' });
+  return r.json();
+}
+async function post(body) {
+  const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+  return r.json();
+}
+async function act(action, busyKey) {
+  A.busy = busyKey || action.type; render();
+  try {
+    const r = await post({ a: 'act', e: A.eid, k: A.k, dev: DEV, action });
+    A.busy = null;
+    if (r.error) { toast(r.error, true); render(); poll(); return r; }
+    A.net = 'ok';
+    setState(r.state);
+    return r;
+  } catch (e) {
+    A.busy = null; A.net = 'down';
+    toast('연결이 끊겼습니다. 와이파이나 데이터를 확인하고 다시 눌러 주세요.', true);
+    render(); return { error: 'net' };
+  }
+}
+
+let pollTimer = null;
+async function poll() {
+  clearTimeout(pollTimer);
+  if (!A.eid || !API) return;
+  if (document.visibilityState === 'visible') {
+    try {
+      const r = await getState();
+      if (r.error) { A.err = r.error; A.loaded = true; render(); return; }
+      A.net = 'ok';
+      if (!r.same) setState(r.state); else if (A.netWas !== A.net) render();
+    } catch (e) { A.net = 'down'; render(); }
+    A.netWas = A.net;
+  }
+  pollTimer = setTimeout(poll, POLL_MS);
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') poll(); });
+
+function setState(s) {
+  const prevMine = A.s && A.pid ? JSON.stringify(Core.myView(A.s, A.pid).current && Core.myView(A.s, A.pid).current.id) : null;
+  const wasHost = A.s ? isHost() : null;
+  A.s = s; A.v = s.v; A.loaded = true; A.err = null;
+  if (!A.pid && isHost()) { const h = s.players.find((p) => p.src === 'host'); if (h && mem()[A.eid] && mem()[A.eid].hostPid === h.id) A.pid = h.id; }
+  if (A.pid && !byId(A.pid)) A.pid = null;
+  remember(A.eid, { title: s.title, date: s.date, sport: s.sport, pid: A.pid });
+  // 내 코트가 새로 배정되면 진동으로 알림 (지원하는 폰만)
+  if (A.pid && prevMine !== null) {
+    const v = Core.myView(s, A.pid);
+    const now = JSON.stringify(v.current && v.current.id);
+    if (now !== prevMine && v.current && navigator.vibrate) navigator.vibrate([120, 60, 120]);
+  }
+  if (wasHost !== null && wasHost !== isHost()) {
+    A.tab = null;
+    toast(isHost() ? '호스트로 지정되었습니다. 진행·명단·초대 메뉴가 생겼습니다.' : '호스트 지정이 해제되었습니다.');
+  }
+  render();
+}
+
+// ---------- 알림 ----------
+let toastTimer = null;
+function toast(msg, bad) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.toggle('bad', !!bad); t.setAttribute('data-show', '');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.removeAttribute('data-show'), bad ? 4200 : 2200);
+}
+
+// ---------- 그리기 ----------
+const $top = document.getElementById('top'), $view = document.getElementById('view'), $dock = document.getElementById('dock');
+
+function render() {
+  const ae = document.activeElement, fid = ae && ae.id && ae !== document.body ? ae.id : null;
+  let sel = null; try { if (fid && ae.selectionStart != null) sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) {}
+
+  if (!A.eid) renderHome();
+  else if (!API) renderNoApi();
+  else if (!A.loaded) { $top.innerHTML = ''; $view.innerHTML = `<div class="empty" aria-busy="true"><b>모임 정보를 불러오는 중…</b></div>`; $dock.innerHTML = ''; }
+  else if (A.err && !A.s) { $top.innerHTML = ''; $view.innerHTML = `<div class="empty"><b>${esc(A.err)}</b><a class="linkbtn" href="./">처음 화면으로</a></div>`; $dock.innerHTML = ''; }
+  else renderEvent();
+  renderSheet();
+
+  if (fid) {
+    const el = document.getElementById(fid);
+    if (el && el !== document.activeElement) { el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
+  }
+}
+const draft = (id, fallback) => (A.drafts[id] != null ? A.drafts[id] : (fallback == null ? '' : fallback));
+
+function stepper(act, val, label, extra = '') {
+  return `<div class="step" role="group" aria-label="${label}">
+    <button class="press" data-act="${act}" data-d="-1" ${extra} aria-label="${label} 줄이기">−</button>
+    <output aria-live="polite">${val}</output>
+    <button class="press" data-act="${act}" data-d="1" ${extra} aria-label="${label} 늘리기">+</button></div>`;
+}
+function dock(html) { $dock.innerHTML = html ? `<div class="dock-in">${html}</div>` : ''; }
+const busyLabel = (key, idle, busy) => (A.busy === key ? busy : idle);
+
+// ---------- 홈 ----------
+function renderHome() {
+  document.title = '오픈코트';
+  const list = Object.entries(mem()).sort((a, b) => (b[1].seen || 0) - (a[1].seen || 0)).slice(0, 8);
+  const sport = draft('c-sport', 'pickleball');
+  $top.innerHTML = '';
+  $view.innerHTML = `
+    <section class="home-hero"><h1 translate="no">오픈코트</h1></section>
+    ${!API ? `<div class="note"><b>서버 주소가 아직 비어 있습니다.</b> index.html 맨 위 API_URL에 앱스크립트 웹 앱 주소를 넣어야 모임을 만들 수 있습니다.</div>` : ''}
+    <form class="block" id="createForm" novalidate>
+      <h2>새 모임 만들기</h2>
+      <div class="panel">
+        <div class="field"><label for="c-title">모임 이름</label><input class="in" id="c-title" name="title" autocomplete="off" maxlength="40" placeholder="예: 일요일 아침 오픈코트…" value="${esc(draft('c-title'))}" data-draft></div>
+        <div class="row"><span class="lbl">종목</span><div class="seg" role="group" aria-label="종목">
+          ${Object.entries(Core.SPORTS).map(([k, v]) => `<button type="button" class="press" data-act="c-sport" data-v="${k}" aria-pressed="${sport === k}">${v.label}</button>`).join('')}</div></div>
+        <div class="field"><label for="c-date">날짜와 시간</label><div class="two">
+          <input class="in" type="date" id="c-date" name="date" value="${esc(draft('c-date'))}" data-draft aria-label="날짜">
+          <input class="in" type="time" id="c-time" name="time" value="${esc(draft('c-time', '07:00'))}" data-draft aria-label="시간"></div></div>
+        <div class="field"><label for="c-place">장소</label><input class="in" id="c-place" name="place" autocomplete="off" maxlength="40" placeholder="예: 학교 테니스장…" value="${esc(draft('c-place'))}" data-draft></div>
+        <div class="row"><span class="lbl">코트</span>${stepper('c-courts', draft('c-courts', 2) + '면', '코트 수')}</div>
+        <div class="field"><label for="c-host">내 이름 <span class="hint" style="display:inline">경기에 같이 뛰면 적어 주세요</span></label><input class="in" id="c-host" name="hostName" autocomplete="name" spellcheck="false" maxlength="16" placeholder="예: 이길봉…" value="${esc(draft('c-host'))}" data-draft></div>
+      </div>
+      ${A.formErr.create ? `<p class="err" role="alert">${esc(A.formErr.create)}</p>` : ''}
+    </form>
+    ${list.length ? `<section class="block"><h2>최근 모임</h2><nav class="panel recent">${list.map(([id, m]) => `<a class="press" href="?e=${encodeURIComponent(id)}${LOCAL && QS.get('api') ? '&api=' + encodeURIComponent(QS.get('api')) : ''}"><span>${esc(m.title || id)}${m.k ? ' <small style="color:var(--muted)">(호스트)</small>' : ''}</span><span>${esc(fmtDate(m.date))}</span></a>`).join('')}</nav></section>` : ''}
+  `;
+  dock(`<button class="primary press" type="submit" form="createForm" ${!API || A.busy === 'create' ? 'disabled' : ''}>${busyLabel('create', '모임 만들고 초대 링크 받기', '만드는 중…')}</button>`);
+}
+
+async function createEvent() {
+  const title = draft('c-title').trim();
+  if (!title) { A.formErr.create = '모임 이름을 적어 주세요.'; render(); const el = document.getElementById('c-title'); if (el) el.focus(); return; }
+  A.formErr.create = null;
+  const date = draft('c-date') ? draft('c-date') + (draft('c-time', '07:00') ? 'T' + draft('c-time', '07:00') : '') : '';
+  A.busy = 'create'; render();
+  try {
+    const r = await post({ a: 'create', dev: DEV, event: { title, sport: draft('c-sport', 'pickleball'), date, place: draft('c-place'), courts: draft('c-courts', 2), hostName: draft('c-host').trim(), dev: DEV } });
+    A.busy = null;
+    if (r.error) { A.formErr.create = r.error; render(); return; }
+    const hostP = r.state.players.find((p) => p.src === 'host');
+    remember(r.id, { k: r.hostKey, role: 'host', title: r.state.title, date: r.state.date, sport: r.state.sport, pid: hostP ? hostP.id : null, hostPid: hostP ? hostP.id : null });
+    A.drafts = {};
+    if (window.__ocGo) return window.__ocGo(r.id, 'invite');
+    location.href = '?e=' + encodeURIComponent(r.id) + (LOCAL && QS.get('api') ? '&api=' + encodeURIComponent(QS.get('api')) : '') + '#invite';
+  } catch (e) { A.busy = null; A.formErr.create = '서버에 연결하지 못했습니다. 인터넷 연결과 API_URL을 확인해 주세요.'; render(); }
+}
+
+function renderNoApi() {
+  $top.innerHTML = '';
+  $view.innerHTML = `<div class="empty"><b>서버 주소가 비어 있습니다</b>index.html 맨 위 API_URL에 앱스크립트 웹 앱 주소를 넣어 주세요.</div>`;
+  dock('');
+}
+
+// ---------- 모임 화면 ----------
+function tabsFor() {
+  if (isHost()) return [['run', '진행'], ['roster', '명단'], ['invite', '초대'], ['rank', '순위']];
+  if (A.pid) return [['me', '내 경기'], ['courts', '코트'], ['rank', '순위']];
+  if (A.watch) return [['courts', '코트'], ['rank', '순위']];
+  return [];
+}
+function defaultTab() {
+  const s = S();
+  if (isHost()) return s.phase === 'rsvp' ? 'invite' : s.phase === 'ready' ? 'roster' : s.phase === 'live' ? 'run' : 'rank';
+  if (A.pid) return s.phase === 'done' ? 'rank' : 'me';
+  return 'courts';
+}
+
+function renderEvent() {
+  const s = S();
+  document.title = `${s.title} | 오픈코트`;
+  const tabs = tabsFor();
+  if (!tabs.some(([k]) => k === A.tab)) A.tab = tabs.length ? defaultTab() : null;
+  if (s.phase === 'done' && A.tab === 'me') A.tab = 'rank';
+  const myV = A.pid ? Core.myView(s, A.pid) : null;
+  const dot = (k) => (k === 'me' && myV && myV.current) || (k === 'run' && s.dirty);
+  $top.innerHTML = `
+    <div class="brand"><div class="ttl"><h1>${esc(s.title)}</h1>
+      <p class="meta"><span class="pill ${s.phase}">${PHASE[s.phase]}</span><span>${SP().label} ${s.courts}면</span>${s.date ? `<span>${esc(fmtDate(s.date))}</span>` : ''}${s.place ? `<span>${esc(s.place)}</span>` : ''}</p></div>
+      ${A.net === 'down' ? '<span class="net" role="status">연결 끊김, 다시 연결 중…</span>' : ''}</div>
+    ${tabs.length ? `<nav class="tabs" role="tablist" aria-label="화면">${tabs.map(([k, l]) => `<button role="tab" class="press" data-act="tab" data-tab="${k}" aria-controls="view" aria-selected="${A.tab === k}">${l}${dot(k) ? '<span class="dot" aria-hidden="true"></span>' : ''}</button>`).join('')}</nav>` : ''}`;
+
+  if (!tabs.length) return renderJoin();
+  ({ me: renderMe, courts: renderCourts, rank: renderRank, run: renderRun, roster: renderRoster, invite: renderInvite })[A.tab]();
+}
+
+// ----- 참석 응답(처음 들어온 사람) -----
+function renderJoin() {
+  const s = S();
+  const open = s.players.filter((p) => !p.claimed && p.src !== 'invite');
+  const yes = s.players.filter((p) => p.present).length;
+  $view.innerHTML = `
+    ${s.note ? `<div class="note">${esc(s.note)}</div>` : ''}
+    <section class="block"><h2>참석 응답 <small>지금 ${NF.format(yes)}명 참석</small></h2>
+      <form class="panel" id="joinForm" novalidate>
+        ${open.length ? `<div class="field"><span style="font-size:13px;color:var(--muted)">호스트가 미리 넣어 둔 이름이 있으면 눌러 주세요</span><div class="chips">${open.map((p) => `<button type="button" class="chip press" data-act="claim" data-id="${p.id}" aria-pressed="${A.drafts['j-claim'] === p.id}">${esc(p.name)}</button>`).join('')}</div></div>` : ''}
+        <div class="field"><label for="j-name">내 이름</label><input class="in" id="j-name" name="name" autocomplete="name" spellcheck="false" maxlength="16" placeholder="예: 김도윤…" value="${esc(draft('j-name'))}" data-draft ${A.drafts['j-claim'] ? 'disabled' : ''}></div>
+        ${levelField('j', draft('j-level'), draft('j-self') === '1')}
+      </form>
+      ${A.formErr.join ? `<p class="err" role="alert">${esc(A.formErr.join)}</p>` : ''}
+    </section>
+    <p class="summary">${s.phase === 'done' ? '이미 종료된 모임입니다.' : '이름과 응답은 이 모임 명단에만 쓰입니다.'} <button class="linkbtn" data-act="watch">응답 없이 결과만 보기</button></p>`;
+  dock(s.phase === 'done' ? `<button class="primary press" data-act="watch">결과 보기</button>` :
+    `<button class="secondary press" data-act="join" data-v="no" ${A.busy ? 'disabled' : ''}>불참</button><button class="primary press" data-act="join" data-v="yes" ${A.busy ? 'disabled' : ''}>${busyLabel('rsvp', '참석', '보내는 중…')}</button>`);
+}
+
+// 종목별 실력 입력: 배드민턴 급수 / 피클볼 DUPR(없으면 자가평가)
+function levelField(prefix, value, self) {
+  const s = S();
+  if (SP().levelKind === 'grade') {
+    return `<div class="field"><span style="font-size:13px;color:var(--muted)">급수 <span class="hint" style="display:inline">모르면 비워 두세요</span></span><div class="chips" role="group" aria-label="급수">
+      ${Core.GRADES.map((g) => `<button type="button" class="chip press" data-act="lv-pick" data-p="${prefix}" data-v="${g.k}" aria-pressed="${value === g.k}">${g.label}</button>`).join('')}</div></div>`;
+  }
+  return `<div class="field"><label for="${prefix}-level">DUPR <span class="hint" style="display:inline">복식 레이팅, 모르면 비워 두세요</span></label>
+      <input class="in" id="${prefix}-level" name="dupr" inputmode="decimal" autocomplete="off" placeholder="예: 3.42…" value="${self ? '' : esc(value)}" data-draft data-lvin="${prefix}" style="max-width:160px">
+      <span style="font-size:13px;color:var(--muted);margin-top:6px">DUPR이 없으면 자가평가</span>
+      <div class="chips" role="group" aria-label="자가평가">${Core.SELF_DUPR.map((v) => `<button type="button" class="chip press" data-act="lv-self" data-p="${prefix}" data-v="${v}" aria-pressed="${self && value === v}">${v}</button>`).join('')}</div></div>`;
+}
+function readLevel(prefix) {
+  if (SP().levelKind === 'grade') return { level: draft(prefix + '-level'), levelSelf: false };
+  const self = draft(prefix + '-self') === '1';
+  return { level: (draft(prefix + '-level') || '').trim(), levelSelf: self };
+}
+
+async function join(status) {
+  const claim = A.drafts['j-claim'];
+  const name = draft('j-name').trim();
+  if (!claim && !name) { A.formErr.join = '이름을 적어 주세요.'; render(); const el = document.getElementById('j-name'); if (el) el.focus(); return; }
+  A.formErr.join = null;
+  const lv = readLevel('j');
+  const r = await act(Object.assign({ type: 'rsvp', pid: claim || undefined, name: claim ? undefined : name, status }, lv.level ? lv : {}), 'rsvp');
+  if (r && r.result && r.result.pid) {
+    A.pid = r.result.pid; remember(A.eid, { pid: A.pid, watch: false }); A.drafts = {}; A.tab = 'me';
+    toast(status === 'yes' ? '참석으로 응답했습니다.' : '불참으로 응답했습니다.');
+    render();
+  }
+}
+
+// ----- 내 경기 -----
+function courtGraphic(m, opts = {}) {
+  const done = m.state === 'done';
+  const winA = done && m.sa > m.sb, winB = done && m.sb > m.sa;
+  const mySide = opts.pid ? (m.a.includes(opts.pid) ? 'a' : m.b.includes(opts.pid) ? 'b' : null) : null;
+  const side = (k, ids, win, lose) => `<div class="half ${k}${win ? ' win' : ''}${lose ? ' lose' : ''}${mySide === k && !done ? ' mine' : ''}">${ids.map((id) => `<span class="pl${id === opts.pid ? ' me' : ''}">${esc(nm(id))}</span>`).join('')}</div>`;
+  return `<div class="court" role="img" aria-label="${m.a.map(nm).join(', ')} 대 ${m.b.map(nm).join(', ')}${done ? `, ${m.sa} 대 ${m.sb}` : ''}">${side('a', m.a, winA, winB)}<div class="net-line"></div>${side('b', m.b, winB, winA)}${done ? `<div class="score">${m.sa} : ${m.sb}</div>` : ''}</div>`;
+}
+
+function renderMe() {
+  const s = S(), p = me();
+  const v = Core.myView(s, A.pid);
+  let html = '';
+  if (!p.present && s.phase !== 'done') {
+    html += `<div class="note"><b>오늘 불참으로 응답되어 있습니다.</b> 오게 되면 아래 버튼으로 바꿔 주세요. 호스트 화면에 바로 반영됩니다.</div>`;
+  }
+  if (s.phase === 'rsvp' || s.phase === 'ready') {
+    const yes = s.players.filter((x) => x.present);
+    html += `<section class="hero"><p class="hero-k">${s.phase === 'ready' ? '대진이 나왔습니다' : '참석 응답'}</p>
+      <h2>${p.present ? (s.phase === 'ready' ? '호스트가 경기를 시작하면 내 코트가 여기에 뜹니다' : '참석으로 응답했습니다') : '불참으로 응답했습니다'}</h2>
+      ${s.phase === 'ready' && v.next ? `<dl class="vs" style="margin-top:14px"><dt>첫 경기</dt><dd>${v.next.round}라운드</dd><dt>짝</dt><dd>${esc(nm(v.next.partner))}</dd><dt>상대</dt><dd>${v.next.opponents.map(nm).map(esc).join(', ')}</dd></dl>` : ''}
+      <div class="row" style="padding:12px 0 0;border:0"><span class="lbl">내 실력 표기<span class="hint">대진 균형에만 쓰입니다</span></span><button class="lv press${lvl(p) ? '' : ' unset'}" data-act="lv-open" data-id="${p.id}" data-self="1">${esc(lvl(p) || (SP().levelKind === 'grade' ? '급수' : 'DUPR'))}</button></div>
+    </section>
+    <section class="block"><h2>참석자 <small>${NF.format(yes.length)}명</small></h2><div class="chips">${yes.map((x) => `<span class="chip static">${esc(x.name)}${lvl(x) ? `<small>${esc(lvl(x))}</small>` : ''}</span>`).join('')}</div></section>`;
+    $view.innerHTML = html;
+    dock(p.present ? `<button class="secondary press" style="flex:1" data-act="rsvp-me" data-v="no">불참으로 바꾸기</button>` : `<button class="primary press" data-act="rsvp-me" data-v="yes">참석으로 바꾸기</button>`);
+    return;
+  }
+
+  // 경기 중
+  if (v.current) {
+    const c = v.current;
+    html += `<section class="hero play" aria-live="polite"><div class="hero-top"><div><p class="hero-k">지금 내 경기</p><h2>${c.round}라운드</h2></div>
+        <div class="hero-court" aria-label="${c.court}코트"><span class="num">${c.court}</span><span class="unit">코트</span></div></div>
+      ${courtGraphic(c.match, { pid: A.pid })}
+      <p class="elapsed">${ago(c.match.startAt)}</p></section>`;
+  } else if (v.next) {
+    const n = v.next, w = v.wait;
+    let why;
+    if (w.resting) why = '<b>이번 차례는 쉬는 순서입니다.</b> 앞 경기가 끝나면 이어서 들어갑니다.';
+    else if (w.blockers.length) why = `<b>${w.blockers.map((b) => `${esc(b.name)} 님(${b.court}코트)`).join(', ')}</b> 경기가 끝나면 바로 시작합니다.`;
+    else if (w.courtsFull) why = '<b>코트가 비면 바로 시작합니다.</b> 근처에서 기다려 주세요.';
+    else why = '<b>곧 코트가 배정됩니다.</b>';
+    html += `<section class="hero" aria-live="polite"><div class="hero-top"><div><p class="hero-k">다음 경기</p><h2>${n.round}라운드 대기</h2></div></div>
+      <p class="why">${why}</p>
+      <dl class="vs"><dt>짝</dt><dd>${esc(nm(n.partner))}</dd><dt>상대</dt><dd>${n.opponents.map(nm).map(esc).join(', ')}</dd></dl></section>`;
+  } else if (p.present) {
+    html += `<section class="hero"><p class="hero-k">오늘 내 경기</p><h2>모두 끝났습니다. 수고하셨습니다</h2><p class="summary">다른 코트 결과가 다 들어오면 호스트가 순위를 확정합니다.</p></section>`;
+  }
+  html += `<div class="recline"><span><b>${v.record.w}</b>승</span><span><b>${v.record.l}</b>패</span><span><b>${signed(v.record.diff)}</b>득실</span><span><b>${v.remaining}</b>경기 남음</span></div>`;
+  if (v.after.length) html += `<section class="block"><h2>그다음 경기</h2><ul class="panel list">${v.after.map((x) => `<li><span>${x.round}라운드</span><span>짝 ${esc(nm(x.partner))}, 상대 ${x.opponents.map(nm).map(esc).join(', ')}</span></li>`).join('')}</ul></section>`;
+  if (v.history.length) html += `<section class="block"><h2>내 경기 기록</h2><ul class="panel list">${v.history.slice().reverse().map((x) => {
+    const m = x.match, mine = x.side === 'a' ? m.sa : m.sb, th = x.side === 'a' ? m.sb : m.sa;
+    return `<li><span>${x.round}R ${mine > th ? '승' : '패'} ${mine}:${th}</span><span>짝 ${esc(nm(x.partner))}</span></li>`;
+  }).join('')}</ul></section>`;
+  $view.innerHTML = html;
+  if (v.current) dock(`<button class="primary press" data-act="score-open" data-mid="${v.current.id}">경기 끝, 결과 입력</button>`);
+  else if (!p.present) dock(`<button class="primary press" data-act="rsvp-me" data-v="yes">참석으로 바꾸기</button>`);
+  else dock(`<button class="secondary press" style="flex:1" data-act="tab" data-tab="courts">코트 현황 보기</button>`);
+}
+
+// ----- 코트 현황 (참가자·관전자·호스트 공통) -----
+function boardHtml(tappable) {
+  const s = S(), b = Core.boardView(s);
+  const fr = Core.frontRound(s);
+  const playingIds = new Map();
+  b.courts.forEach((c) => c.match && c.match.a.concat(c.match.b).forEach((p) => playingIds.set(p, c.court)));
+  const courts = b.courts.map((c) => {
+    if (!c.match) return `<div class="cwrap"><div class="clabel"><b>${c.court}코트</b><span>비어 있음</span></div><div class="court empty">다음 경기 준비 중</div></div>`;
+    const m = c.match;
+    const g = courtGraphic(m, { pid: A.pid });
+    return `<div class="cwrap"><div class="clabel"><b>${c.court}코트</b><span>${m.ri + 1}라운드, ${ago(m.startAt)}</span></div>
+      ${tappable ? `<button class="tap press" data-act="score-open" data-mid="${m.id}" aria-label="${c.court}코트 결과 입력">${g}</button>` : g}</div>`;
+  }).join('');
+  const queue = b.queue.slice(0, 6).map((m) => {
+    const blockers = m.a.concat(m.b).filter((p) => playingIds.has(p));
+    const later = m.ri > fr + 1;
+    const cs = [...new Set(blockers.map((p) => playingIds.get(p)))].sort();
+    const why = later ? `${m.ri + 1}라운드 차례를 기다리는 중` : cs.length ? `${cs.join('·')}코트 경기가 끝나면 시작` : '코트가 비면 바로 시작';
+    return `<li><span>${m.ri + 1}R</span><span><span class="q-who">${m.a.map(nm).map(esc).join(' · ')} 대 ${m.b.map(nm).map(esc).join(' · ')}</span><span class="q-why">${why}</span></span></li>`;
+  }).join('');
+  return `<div class="courts">${courts}</div>
+    <section class="block"><h2>다음 차례 <small>${NF.format(b.doneCount)} / ${NF.format(b.total)}경기 끝</small></h2>
+      ${queue ? `<ul class="panel list queue">${queue}</ul>` : `<div class="note">남은 대기 경기가 없습니다.</div>`}</section>`;
+}
+
+function renderCourts() {
+  const s = S();
+  if (s.phase === 'rsvp' || s.phase === 'ready') {
+    $view.innerHTML = `<div class="empty"><b>${s.phase === 'ready' ? '대진은 나왔고, 곧 시작합니다' : '아직 참석을 받는 중입니다'}</b>경기가 시작되면 코트별 현황이 여기에 뜹니다.</div>`;
+    dock(!A.pid && !isHost() ? `<button class="primary press" data-act="unwatch">참석 응답하기</button>` : ''); return;
+  }
+  $view.innerHTML = boardHtml(isHost());
+  dock(!A.pid && !isHost() && s.phase !== 'done' ? `<button class="primary press" data-act="unwatch">나도 참석하기</button>` : '');
+}
+
+// ----- 순위 -----
+function renderRank() {
+  const s = S();
+  const list = Core.standings(s);
+  const scored = Core.allMatches(s).some((m) => m.state === 'done');
+  const fixed = s.mode === 'fixed';
+  const myTeam = fixed && A.pid ? (s.teams.find((t) => t.p.includes(A.pid)) || {}).id : A.pid;
+  let podium = '';
+  if (s.phase === 'done' && scored) {
+    const top = list.filter((r) => r.g > 0).slice(0, 3);
+    const order = [top[1], top[0], top[2]], cls = ['s', 'g', 'b'];
+    podium = `<div class="podium">${order.map((r, i) => r ? `<div class="pod ${cls[i]}"><div class="medal">${r.rank}</div><div class="who">${esc(r.name)}</div><div class="rec">${r.w}승 ${r.l}패<br>득실 ${signed(r.diff)}</div></div>` : '<div></div>').join('')}</div>`;
+  }
+  const rows = list.filter((r) => r.g > 0).map((r) => `<tr class="${r.rank <= 3 ? 'top3' : ''}${r.id === myTeam ? ' me' : ''}"><td>${r.rank}</td><td>${esc(r.name)}</td><td>${r.g}</td><td>${r.w}-${r.l}</td><td>${signed(r.diff)}</td><td>${Math.round(r.rate * 100)}%</td></tr>`).join('');
+  $view.innerHTML = `${podium}
+    ${scored ? `<div class="tbl-wrap"><table><caption class="vh">${s.phase === 'done' ? '최종 순위' : '현재 순위'}</caption><thead><tr><th scope="col">순위</th><th scope="col">${fixed ? '팀' : '이름'}</th><th scope="col">경기</th><th scope="col">승-패</th><th scope="col">득실</th><th scope="col">승률</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="summary">${s.phase === 'done' ? '최종 순위입니다.' : '경기 중 순위는 계속 바뀝니다.'} 승률, 득실차, 득점 순으로 정하므로 늦게 온 사람도 공정하게 비교됩니다.</p>`
+      : `<div class="empty"><b>아직 결과가 없습니다</b>경기 결과가 들어오면 순위가 여기에 쌓입니다.</div>`}`;
+  if (isHost()) dock(s.phase === 'done' ? `<button class="secondary press" style="flex:1" data-act="reopen">경기 다시 열기</button>` : s.phase === 'live' ? finishBtn() : '');
+  else dock('');
+}
+
+// ----- 호스트: 진행 -----
+function finishBtn() {
+  const left = Core.allMatches(S()).filter((m) => m.state === 'play').length;
+  const label = A.armed === 'finish' ? (left ? `진행 중 ${left}경기는 빼고 종료합니다. 한 번 더 누르세요` : '한 번 더 누르면 종료합니다') : '경기 종료하고 순위 확정';
+  return `<button class="primary press${A.armed === 'finish' ? ' armed' : ''}" data-act="finish">${busyLabel('finish', label, '종료하는 중…')}</button>`;
+}
+function renderRun() {
+  const s = S();
+  let html = '';
+  if (s.dirty) html += `<div class="banner" role="status"><span>명단이나 설정이 바뀌었습니다. 아직 시작 안 한 경기부터 다시 짤까요?</span><button class="press" data-act="draw">${busyLabel('draw', '다시 짜기', '짜는 중…')}</button></div>`;
+  if (s.phase === 'rsvp') {
+    $view.innerHTML = html + `<div class="empty"><b>아직 대진이 없습니다</b>명단 탭에서 참석자를 확인하고 대진을 짜세요.</div>`;
+    dock(`<button class="primary press" data-act="tab" data-tab="roster">명단 확인하러 가기</button>`); return;
+  }
+  if (s.phase === 'ready') {
+    const r1 = s.rounds[0];
+    html += `<section class="block"><h2>1라운드 미리 보기 <small>총 ${s.rounds.length}라운드</small></h2><div class="courts">${r1.matches.map((m) => `<div class="cwrap"><div class="clabel"><b>${m.court}코트</b></div>${courtGraphic(m)}</div>`).join('')}</div>
+      ${r1.rest && r1.rest.length ? `<p class="summary">쉬는 사람: ${r1.rest.map(nm).map(esc).join(', ')}</p>` : ''}</section>`;
+    $view.innerHTML = html;
+    dock(`<button class="primary press" data-act="start" ${A.busy ? 'disabled' : ''}>${busyLabel('start', '경기 시작', '시작하는 중…')}</button>`); return;
+  }
+  if (A.pid && s.phase === 'live') {
+    const v = Core.myView(s, A.pid);
+    if (v.current) html += `<div class="note"><b>내 경기: ${v.current.court}코트</b> 짝 ${esc(nm(v.current.partner))}</div>`;
+    else if (v.next) html += `<div class="note"><b>내 다음 경기: ${v.next.round}라운드</b> 짝 ${esc(nm(v.next.partner))}</div>`;
+  }
+  html += boardHtml(true);
+  const recent = Core.allMatches(s).filter((m) => m.state === 'done').sort((a, b) => (b.at || 0) - (a.at || 0)).slice(0, 6);
+  if (recent.length) html += `<section class="block"><h2>최근 결과 <small>눌러서 고치기</small></h2><ul class="panel list queue">${recent.map((m) => `<li><span>${m.ri + 1}R ${m.court}코트</span><span><button class="linkbtn" data-act="score-open" data-mid="${m.id}">${m.a.map(nm).map(esc).join(' · ')} ${m.sa}:${m.sb} ${m.b.map(nm).map(esc).join(' · ')}</button>${m.by ? `<span class="q-why">${m.by === 'host' ? '호스트' : esc(nm(m.by))} 입력${m.edited ? ', 수정됨' : ''}</span>` : ''}</span></li>`).join('')}</ul></section>`;
+  $view.innerHTML = html;
+  dock(s.phase === 'done' ? `<button class="secondary press" style="flex:1" data-act="reopen">경기 다시 열기</button>` : finishBtn());
+}
+
+// ----- 호스트: 명단 -----
+function renderRoster() {
+  const s = S(), R = Engine.recommendRounds(s.players.filter((p) => p.present).length, s.courts);
+  const isRot = s.mode === 'rotation', live = s.phase === 'live' || s.phase === 'done';
+  const n = s.players.filter((p) => p.present).length;
+  let summary;
+  if (isRot && R.used) {
+    const tr = Core.totalRounds(s), each = (tr * R.used * 4 / n).toFixed(1);
+    summary = `한 번에 <b>${R.used * 4}명</b>이 뛰고 <b>${R.perRoundRest}명</b>이 쉽니다. <b>${tr}라운드</b>면 1인당 약 <b>${each}경기</b>, 예상 <b>${fmtMin(tr * s.minutes)}</b>.${s.totalRounds ? '' : ' 모두가 한 번씩 짝이 되는 추천값입니다.'}`;
+  } else if (!isRot) {
+    const T = s.teams.length, games = T * (T - 1) / 2, C = Math.min(s.courts, Math.floor(T / 2)) || 1;
+    summary = T >= 2 ? `<b>${T}팀</b> 리그전, 총 <b>${games}경기</b>, 예상 <b>${fmtMin(Math.ceil(games / C) * s.minutes)}</b>.` : '아래에서 두 사람씩 눌러 팀을 만드세요.';
+  } else summary = '참석자가 4명 이상이면 대진을 짤 수 있습니다.';
+
+  const players = s.players.slice().sort((a, b) => (b.present - a.present)).map((p) => {
+    const src = (p.src === 'host' ? '만든 사람, 호스트' : (s.cohosts || []).includes(p.id) ? '호스트, ' : '') + (p.src === 'host' ? '' : p.src === 'walkin' ? '현장 추가' : (p.status === 'no' ? '불참 응답' : p.claimed ? '참석 응답' : '응답 대기'));
+    return `<div class="player${p.present ? '' : ' off'}">
+      <button class="check press" data-act="present" data-id="${p.id}" aria-pressed="${p.present}" aria-label="${esc(p.name)} 오늘 참석"></button>
+      <span class="pname">${esc(p.name)}<small>${src}</small></span>
+      <button class="lv press${lvl(p) ? '' : ' unset'}" data-act="lv-open" data-id="${p.id}" aria-label="${esc(p.name)} 실력 표기 바꾸기">${esc(lvl(p) || (SP().levelKind === 'grade' ? '급수' : 'DUPR'))}</button>
+      <button class="del press${A.armed === 'del:' + p.id ? ' armed' : ''}" data-act="del" data-id="${p.id}" aria-label="${esc(p.name)} 명단에서 빼기">${A.armed === 'del:' + p.id ? '한 번 더' : '×'}</button>
+    </div>`;
+  }).join('');
+
+  let teamsHtml = '';
+  if (!isRot) {
+    const inTeam = new Set(s.teams.flatMap((t) => t.p));
+    const free = s.players.filter((p) => p.present && !inTeam.has(p.id));
+    teamsHtml = `<section class="block"><h2>팀 <small>${s.teams.length}팀</small></h2><div class="panel">
+      ${s.teams.map((t, i) => `<div class="team"><b>${i + 1}팀 ${t.p.map(nm).map(esc).join(' · ')}</b><button class="del press" data-act="unteam" data-i="${i}" aria-label="${i + 1}팀 풀기">×</button></div>`).join('')}
+      <div class="field"><span style="font-size:13px;color:var(--muted)">두 사람을 차례로 누르면 한 팀이 됩니다</span><div class="chips">${free.map((p) => `<button class="chip press" data-act="pick" data-id="${p.id}" aria-pressed="${A.drafts.pick === p.id}">${esc(p.name)}${lvl(p) ? `<small>${esc(lvl(p))}</small>` : ''}</button>`).join('') || '<span class="hint">팀이 없는 참석자가 없습니다.</span>'}</div></div>
+      ${free.length >= 2 ? `<div class="row"><span class="lbl">남은 사람 자동으로 짝 짓기<span class="hint">실력이 높은 사람과 낮은 사람을 묶습니다</span></span><button class="secondary small press" data-act="autoteam">짝 짓기</button></div>` : ''}
+    </div></section>`;
+  }
+
+  const t = s.date && s.date.includes('T') ? s.date.split('T') : [s.date || '', ''];
+  $view.innerHTML = `
+    ${s.dirty ? `<div class="banner" role="status"><span>바뀐 내용을 반영하려면 대진을 다시 짜세요.</span><button class="press" data-act="draw">${busyLabel('draw', '다시 짜기', '짜는 중…')}</button></div>` : ''}
+    <section class="block"><h2>참가자 <small>참석 ${NF.format(n)}명 / 전체 ${NF.format(s.players.length)}명</small></h2><div class="panel">
+      <form class="add" id="addForm" novalidate><label class="vh" for="r-name">현장에 온 사람 이름</label><input class="in" id="r-name" name="walkin" autocomplete="off" spellcheck="false" maxlength="16" placeholder="현장에 온 사람 이름…" value="${esc(draft('r-name'))}" data-draft><button class="press">${busyLabel('addPlayer', '추가', '추가 중…')}</button></form>
+      ${players || '<div class="empty"><b>아직 참가자가 없습니다</b>초대 탭에서 링크를 보내거나 위 칸에 이름을 넣으세요.</div>'}
+    </div></section>
+    ${teamsHtml}
+    <section class="block"><h2>경기 설정</h2><div class="panel">
+      <div class="row"><span class="lbl">종목${live ? '' : '<span class="hint">바꾸면 실력 표기는 지워집니다</span>'}</span><div class="seg" role="group" aria-label="종목">
+        ${Object.entries(Core.SPORTS).map(([k, v]) => `<button class="press" data-act="set" data-f="sport" data-v="${k}" aria-pressed="${s.sport === k}" ${live ? 'disabled' : ''}>${v.label}</button>`).join('')}</div></div>
+      <div class="row"><span class="lbl">방식<span class="hint">${isRot ? '경기마다 짝이 바뀌고 개인 순위' : '정해진 짝으로 팀 리그, 팀 순위'}</span></span><div class="seg" role="group" aria-label="방식">
+        <button class="press" data-act="set" data-f="mode" data-v="rotation" aria-pressed="${isRot}" ${live ? 'disabled' : ''}>로테이션</button>
+        <button class="press" data-act="set" data-f="mode" data-v="fixed" aria-pressed="${!isRot}" ${live ? 'disabled' : ''}>고정 복식</button></div></div>
+      <div class="row"><span class="lbl">코트</span>${stepper('set-step', s.courts + '면', '코트 수', 'data-f="courts"')}</div>
+      ${isRot ? `<div class="row"><span class="lbl">라운드<span class="hint">${s.totalRounds ? `추천 ${R.rounds}라운드, <button class="linkbtn" data-act="set" data-f="totalRounds" data-v="">추천값으로</button>` : '추천값'}</span></span>${stepper('set-step', Core.totalRounds(s), '라운드 수', 'data-f="totalRounds"')}</div>
+      <div class="row"><label for="bal">실력 균형<span class="hint">양 팀 실력 합이 비슷하게 짭니다</span></label><input type="checkbox" class="toggle" id="bal" ${s.balanceLevel ? 'checked' : ''}></div>` : ''}
+      <div class="row"><span class="lbl">목표 점수<span class="hint">2점 차 승리, 듀스 적용</span></span>${stepper('set-step', s.target + '점', '목표 점수', 'data-f="target"')}</div>
+      <div class="row"><span class="lbl">경기당 시간<span class="hint">예상 시간 계산용</span></span>${stepper('set-step', s.minutes + '분', '경기당 시간', 'data-f="minutes"')}</div>
+    </div><p class="summary">${summary}</p></section>
+    <section class="block"><h2>모임 정보</h2><div class="panel">
+      <div class="field"><label for="s-title">모임 이름</label><input class="in" id="s-title" name="title" autocomplete="off" maxlength="40" value="${esc(draft('s-title', s.title))}" data-draft data-save="title"></div>
+      <div class="field"><label for="s-date">날짜와 시간</label><div class="two"><input class="in" type="date" id="s-date" name="date" value="${esc(t[0])}" data-save="date" aria-label="날짜"><input class="in" type="time" id="s-time" name="time" value="${esc(t[1])}" data-save="date" aria-label="시간"></div></div>
+      <div class="field"><label for="s-place">장소</label><input class="in" id="s-place" name="place" autocomplete="off" maxlength="40" placeholder="예: 학교 테니스장…" value="${esc(draft('s-place', s.place))}" data-draft data-save="place"></div>
+      <div class="field"><label for="s-note">초대장에 붙일 말</label><input class="in" id="s-note" name="note" autocomplete="off" maxlength="200" placeholder="예: 공은 준비되어 있습니다…" value="${esc(draft('s-note', s.note))}" data-draft data-save="note"></div>
+    </div></section>
+    ${s.rounds.length && !live ? `<section class="block"><button class="secondary press${A.armed === 'reset' ? ' armed' : ''}" style="width:100%" data-act="reset">${A.armed === 'reset' ? '한 번 더 누르면 대진을 지웁니다' : '대진 지우고 참석 받기로 돌아가기'}</button></section>` : ''}`;
+
+  const canDraw = isRot ? n >= 4 : s.teams.filter((tm) => tm.p.every((id) => (byId(id) || {}).present)).length >= 2;
+  if (s.phase === 'rsvp') dock(`<button class="primary press" data-act="draw" ${!canDraw || A.busy ? 'disabled' : ''}>${busyLabel('draw', canDraw ? '대진 짜기' : (isRot ? '4명 이상 참석해야 짤 수 있습니다' : '팀이 2개 이상 있어야 합니다'), '짜는 중…')}</button>`);
+  else if (s.phase === 'ready') dock(s.dirty ? `<button class="primary press" data-act="draw">${busyLabel('draw', '대진 다시 짜기', '짜는 중…')}</button>` : `<button class="primary press" data-act="start" ${A.busy ? 'disabled' : ''}>${busyLabel('start', '경기 시작', '시작하는 중…')}</button>`);
+  else if (s.phase === 'live') dock(s.dirty ? `<button class="primary press" data-act="draw">${busyLabel('draw', '남은 경기 다시 짜기', '짜는 중…')}</button>` : `<button class="secondary press" style="flex:1" data-act="tab" data-tab="run">진행 화면으로</button>`);
+  else dock('');
+}
+
+// ----- 호스트: 초대 -----
+function inviteUrl() { const u = new URL(location.href); u.search = '?e=' + encodeURIComponent(A.eid); u.hash = ''; if (LOCAL && QS.get('api')) u.searchParams.set('api', QS.get('api')); return u.toString(); }
+function cohostUrl() { const u = new URL(inviteUrl()); u.searchParams.set('k', S().hostKey || A.k); return u.toString(); }
+function inviteText() {
+  const s = S();
+  return [`[${SP().label}] ${s.title}`, s.date ? fmtDate(s.date) : '', s.place || '', s.note || '', '', '참석 여부를 눌러 주세요.', inviteUrl()].filter((x, i, arr) => x !== '' || (i > 0 && arr[i - 1] !== '')).join('\n');
+}
+function hostsHtml() {
+  const s = S();
+  const creator = s.players.find((p) => p.src === 'host');
+  const co = (s.cohosts || []).map(byId).filter(Boolean);
+  const pickable = s.players.filter((p) => p.claimed && p.src !== 'host' && !(s.cohosts || []).includes(p.id));
+  const waiting = s.players.filter((p) => !p.claimed && p.src !== 'host').length;
+  const rows = [];
+  if (creator) rows.push(`<div class="team"><b>${esc(creator.name)}</b><span class="hint">만든 사람</span></div>`);
+  co.forEach((p) => rows.push(`<div class="team"><b>${esc(p.name)}${p.id === A.pid ? ' <span class="hint" style="display:inline">(나)</span>' : ''}</b><button class="secondary small press" data-act="cohost" data-id="${p.id}" data-on="0">${p.id === A.pid ? '내려놓기' : '해제'}</button></div>`));
+  return `<section class="block"><h2>호스트 <small>${NF.format((creator ? 1 : 0) + co.length)}명</small></h2><div class="panel">
+      ${rows.join('') || '<div class="team"><span class="hint">모임을 만든 폰이 호스트입니다</span></div>'}
+      <div class="field"><span style="font-size:13px;color:var(--muted)">호스트 맡기기</span>
+        ${pickable.length ? `<div class="chips">${pickable.map((p) => `<button class="chip press" data-act="cohost" data-id="${p.id}" data-on="1">${esc(p.name)}</button>`).join('')}</div>` : '<span class="hint">지정할 수 있는 사람이 아직 없습니다</span>'}
+        ${waiting ? `<span class="hint">초대 링크로 자기 폰에서 응답한 사람만 지정할 수 있습니다. 아직 응답하지 않은 사람 ${NF.format(waiting)}명</span>` : ''}</div>
+      ${s.hostKey ? `<div class="row"><span class="lbl">공동 호스트 링크<span class="hint">받은 사람 누구나 호스트가 됩니다. 단톡방에는 올리지 마세요</span></span><button class="secondary small press" data-act="copy" data-what="cohost">복사</button></div>` : ''}
+    </div><p class="summary">지정하면 그 사람 폰에 바로 진행·명단·초대 메뉴가 생기고, 해제하면 바로 사라집니다. 만든 사람의 권한은 해제되지 않습니다.</p></section>`;
+}
+function renderInvite() {
+  const s = S();
+  const yes = s.players.filter((p) => p.present), no = s.players.filter((p) => p.status === 'no'), wait = s.players.filter((p) => !p.claimed && p.src !== 'walkin' && p.src !== 'host' && p.status !== 'no');
+  $view.innerHTML = `
+    <section class="block"><h2>초대 링크</h2><div class="panel">
+      <div class="field"><label for="inv-text">보낼 메시지</label><textarea class="in" id="inv-text" rows="6" readonly style="resize:none;font-size:14px">${esc(inviteText())}</textarea></div>
+      <div class="row" style="gap:8px;justify-content:flex-end"><button class="secondary small press" data-act="copy" data-what="text">메시지 복사</button>${navigator.share ? '<button class="secondary small press" data-act="share">공유하기</button>' : ''}</div>
+    </div><p class="summary">카톡 단톡방에 붙여 넣으면 됩니다. 받은 사람이 링크를 열어 이름을 적고 참석을 누르면 명단에 바로 들어옵니다.</p></section>
+    <section class="block"><h2>응답 현황 <small>참석 ${NF.format(yes.length)}, 불참 ${NF.format(no.length)}</small></h2><div class="panel">
+      <div class="field"><span style="font-size:13px;color:var(--muted)">참석</span><div class="chips">${yes.map((p) => `<span class="chip static">${esc(p.name)}${lvl(p) ? `<small>${esc(lvl(p))}</small>` : ''}</span>`).join('') || '<span class="hint">아직 없습니다</span>'}</div></div>
+      ${no.length ? `<div class="field"><span style="font-size:13px;color:var(--muted)">불참</span><div class="chips">${no.map((p) => `<span class="chip static">${esc(p.name)}</span>`).join('')}</div></div>` : ''}
+      ${wait.length ? `<div class="field"><span style="font-size:13px;color:var(--muted)">미리 넣어 둔 이름 중 응답 대기</span><div class="chips">${wait.map((p) => `<span class="chip static">${esc(p.name)}</span>`).join('')}</div></div>` : ''}
+    </div></section>
+    ${hostsHtml()}`;
+  dock(s.phase === 'rsvp' ? `<button class="primary press" data-act="tab" data-tab="roster">명단 확인하고 대진 짜기</button>` : '');
+}
+
+// ---------- 시트 (결과 입력, 실력 표기) ----------
+let sheetOpen = false;
+function openSheet(state) {
+  A.sheet = state; renderSheet();
+  const el = document.getElementById('sheet');
+  el.hidden = false;
+  document.querySelector('.app').inert = true; $dock.inert = true;
+  requestAnimationFrame(() => requestAnimationFrame(() => el.setAttribute('data-open', '')));
+  sheetOpen = true;
+  setTimeout(() => { const b = document.querySelector('#sheetIn [data-autofocus]') || document.querySelector('#sheetIn button'); if (b) b.focus({ preventScroll: true }); }, 60);
+}
+function closeSheet(instant) {
+  const el = document.getElementById('sheet');
+  el.removeAttribute('data-open');
+  A.sheet = null; sheetOpen = false;
+  document.querySelector('.app').inert = false; $dock.inert = false;
+  const done = () => { if (!A.sheet) { el.hidden = true; document.getElementById('sheetIn').innerHTML = ''; } };
+  if (instant) done(); else setTimeout(done, 210);
+}
+function winScore(sh) {
+  const s = S();
+  if (sh.lose == null || !sh.deuce) return s.target;
+  const w = sh.lose + 2, cap = SP().cap;
+  return cap && w > cap ? cap : w;
+}
+function renderSheet() {
+  if (!A.sheet || !S()) return;
+  const sh = A.sheet, s = S(), box = document.getElementById('sheetIn');
+  if (sh.type === 'score') {
+    const m = Core.findMatch(s, sh.mid);
+    if (!m) { closeSheet(); return; }
+    const w = winScore(sh);
+    const loserIds = sh.win ? m[sh.win === 'a' ? 'b' : 'a'] : null;
+    const pad = Array.from({ length: s.target - 1 }, (_, i) => `<button class="press" data-act="sc-lose" data-v="${i}" aria-pressed="${!sh.deuce && sh.lose === i}" ${sh.win ? '' : 'disabled'}>${i}</button>`).join('');
+    box.innerHTML = `
+      <h3 id="sheetTitle">${m.court ? m.court + '코트 ' : ''}결과 입력${m.state === 'done' ? ' (수정)' : ''}</h3>
+      <p class="big">이긴 팀을 고르고, 진 팀 점수를 누르세요</p>
+      <div class="teampick" role="group" aria-label="이긴 팀">
+        ${['a', 'b'].map((k) => `<button class="press" data-act="sc-win" data-v="${k}" aria-pressed="${sh.win === k}" ${k === 'a' ? 'data-autofocus' : ''}>${m[k].map(nm).map(esc).join(' · ')}${m[k].includes(A.pid) ? '<small>우리 팀</small>' : ''}</button>`).join('')}
+      </div>
+      ${sh.win ? `<div class="scoreline" aria-live="polite"><div><span class="w">${w}</span><small>이긴 팀</small></div><span class="sep">:</span><div><span>${sh.lose == null ? '–' : sh.lose}</span><small>${loserIds.map(nm).map(esc).join(' · ')}</small></div></div>` : ''}
+      <h3>진 팀 점수</h3>
+      <div class="pad">${pad}</div>
+      <div class="deuce"><label for="sc-deuce" style="font-weight:500">듀스<span class="hint">${s.target - 1}:${s.target - 1} 이후 2점 차${SP().cap ? `, 최대 ${SP().cap}점` : ''}</span></label>
+        ${sh.deuce ? stepper('sc-deuce-step', sh.lose, '듀스 진 팀 점수') : `<input type="checkbox" class="toggle" id="sc-deuce" ${sh.win ? '' : 'disabled'}>`}</div>
+      <div class="sheet-actions">
+        <button class="secondary press" style="flex:1" data-act="sheet-close">취소</button>
+        <button class="primary press" style="flex:2" data-act="sc-save" ${sh.win && sh.lose != null && !A.busy ? '' : 'disabled'}>${busyLabel('score', '결과 저장', '저장하는 중…')}</button>
+      </div>`;
+  } else if (sh.type === 'level') {
+    const p = byId(sh.pid);
+    if (!p) { closeSheet(); return; }
+    box.innerHTML = `
+      <h3 id="sheetTitle">${esc(p.name)}</h3>
+      <p class="big">${SP().levelKind === 'grade' ? '급수' : 'DUPR'} 표기</p>
+      <form id="lvForm" novalidate>${levelField('lv', draft('lv-level'), draft('lv-self') === '1')}</form>
+      <div class="sheet-actions">
+        <button class="ghost press" data-act="lv-clear">지우기</button>
+        <button class="secondary press" style="flex:1" data-act="sheet-close">취소</button>
+        <button class="primary press" style="flex:2" data-act="lv-save">${busyLabel('lv', '저장', '저장하는 중…')}</button>
+      </div>`;
+  }
+}
+
+// ---------- 이벤트 ----------
+function arm(key) {
+  if (A.armed === key) { A.armed = null; return true; }
+  A.armed = key; clearTimeout(arm.t); arm.t = setTimeout(() => { A.armed = null; render(); }, 3500);
+  render(); return false;
+}
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast('복사했습니다.'); }
+  catch (e) { const ta = document.getElementById('inv-text'); if (ta) { ta.focus(); ta.select(); } toast('길게 눌러 직접 복사해 주세요.', true); }
+}
+
+document.addEventListener('click', async (e) => {
+  if (e.target.id === 'sheet') { closeSheet(); return; }
+  const link = e.target.closest('a[href^="?e="]');
+  if (link && window.__ocGo) { e.preventDefault(); window.__ocGo(new URLSearchParams(link.getAttribute('href')).get('e')); return; }
+  const t = e.target.closest('[data-act]');
+  if (!t || t.disabled) return;
+  const a = t.dataset.act, id = t.dataset.id, s = S();
+  switch (a) {
+    case 'tab': A.tab = t.dataset.tab; try { history.replaceState(null, '', '#' + A.tab); } catch (err) {} window.scrollTo(0, 0); render(); break;
+    case 'c-sport': A.drafts['c-sport'] = t.dataset.v; render(); break;
+    case 'c-courts': A.drafts['c-courts'] = Math.max(1, Math.min(8, +draft('c-courts', 2) + +t.dataset.d)); render(); break;
+    case 'claim': A.drafts['j-claim'] = A.drafts['j-claim'] === id ? null : id; render(); break;
+    case 'join': join(t.dataset.v); break;
+    case 'watch': A.watch = true; remember(A.eid, { watch: true }); A.tab = 'courts'; render(); break;
+    case 'unwatch': A.watch = false; remember(A.eid, { watch: false }); render(); break;
+    case 'rsvp-me': { const r = await act({ type: 'rsvp', pid: A.pid, status: t.dataset.v }, 'rsvp'); if (!r.error) toast(t.dataset.v === 'yes' ? '참석으로 바꿨습니다.' : '불참으로 바꿨습니다.'); break; }
+    case 'lv-pick': { const p = t.dataset.p; A.drafts[p + '-level'] = A.drafts[p + '-level'] === t.dataset.v ? '' : t.dataset.v; A.drafts[p + '-self'] = ''; render(); break; }
+    case 'lv-self': { const p = t.dataset.p; const on = !(A.drafts[p + '-self'] === '1' && A.drafts[p + '-level'] === t.dataset.v); A.drafts[p + '-level'] = on ? t.dataset.v : ''; A.drafts[p + '-self'] = on ? '1' : ''; render(); break; }
+    case 'lv-open': { const p = byId(id); A.drafts['lv-level'] = p.level || ''; A.drafts['lv-self'] = p.levelSelf ? '1' : ''; openSheet({ type: 'level', pid: id, self: t.dataset.self === '1' }); break; }
+    case 'lv-clear': A.drafts['lv-level'] = ''; A.drafts['lv-self'] = ''; renderSheet(); break;
+    case 'lv-save': {
+      const lv = readLevel('lv'), sh = A.sheet;
+      if (lv.level && SP().levelKind === 'dupr' && !Core.cleanLevel(s.sport, lv.level)) { toast('DUPR은 2.0에서 8.0 사이 숫자로 적어 주세요.', true); return; }
+      const r = sh.self && !isHost() ? await act({ type: 'rsvp', pid: sh.pid, level: lv.level, levelSelf: lv.levelSelf }, 'lv') : await act({ type: 'setPlayer', pid: sh.pid, level: lv.level, levelSelf: lv.levelSelf }, 'lv');
+      if (!r.error) { closeSheet(); toast('저장했습니다.'); }
+      break;
+    }
+    case 'score-open': {
+      const m = Core.findMatch(s, t.dataset.mid);
+      const st = { type: 'score', mid: m.id, win: null, lose: null, deuce: false, edit: m.state === 'done' };
+      if (m.state === 'done') { st.win = m.sa > m.sb ? 'a' : 'b'; st.lose = Math.min(m.sa, m.sb); st.deuce = Math.max(m.sa, m.sb) > s.target; }
+      openSheet(st); break;
+    }
+    case 'sc-win': A.sheet.win = t.dataset.v; renderSheet(); break;
+    case 'sc-lose': A.sheet.lose = +t.dataset.v; A.sheet.deuce = false; renderSheet(); break;
+    case 'sc-deuce-step': { const cap = SP().cap; A.sheet.lose = Math.max(s.target - 1, Math.min((cap || 99) - 1, A.sheet.lose + +t.dataset.d)); renderSheet(); break; }
+    case 'sc-save': {
+      const sh = A.sheet, w = winScore(sh);
+      const sa = sh.win === 'a' ? w : sh.lose, sb = sh.win === 'a' ? sh.lose : w;
+      const r = await act({ type: 'score', mid: sh.mid, sa, sb, by: A.pid || undefined, edit: !!sh.edit }, 'score');
+      closeSheet();
+      if (!r.error) toast(sh.edit ? '결과를 고쳤습니다.' : '결과를 저장했습니다.');
+      break;
+    }
+    case 'sheet-close': closeSheet(); break;
+    case 'present': { const p = byId(id); act({ type: 'setPlayer', pid: id, present: !p.present }, 'present:' + id); break; }
+    case 'del': if (arm('del:' + id)) act({ type: 'removePlayer', pid: id }); break;
+    case 'pick': {
+      if (!A.drafts.pick) { A.drafts.pick = id; render(); }
+      else if (A.drafts.pick === id) { A.drafts.pick = null; render(); }
+      else { const teams = s.teams.map((x) => x.p).concat([[A.drafts.pick, id]]); A.drafts.pick = null; act({ type: 'setTeams', teams }); }
+      break;
+    }
+    case 'unteam': act({ type: 'setTeams', teams: s.teams.filter((_, i) => i !== +t.dataset.i).map((x) => x.p) }); break;
+    case 'autoteam': {
+      const inTeam = new Set(s.teams.flatMap((x) => x.p));
+      const lv = Core.makeLevelOf(s);
+      const free = s.players.filter((p) => p.present && !inTeam.has(p.id)).sort((x, y) => lv(y.id) - lv(x.id));
+      const teams = s.teams.map((x) => x.p);
+      while (free.length >= 2) teams.push([free.shift().id, free.pop().id]);
+      act({ type: 'setTeams', teams }); break;
+    }
+    case 'set': {
+      const f = t.dataset.f, v = t.dataset.v;
+      act({ type: 'settings', fields: { [f]: f === 'totalRounds' ? null : v } }); break;
+    }
+    case 'set-step': {
+      const f = t.dataset.f, d = +t.dataset.d;
+      const cur = f === 'totalRounds' ? Core.totalRounds(s) : s[f];
+      act({ type: 'settings', fields: { [f]: cur + d } }, 'set'); break;
+    }
+    case 'draw': { const r = await act({ type: 'draw' }, 'draw'); if (!r.error) { toast('대진을 짰습니다.'); if (S().phase !== 'live') { A.tab = 'run'; render(); } } break; }
+    case 'start': { const r = await act({ type: 'start' }, 'start'); if (!r.error) { toast('경기를 시작했습니다.'); A.tab = 'run'; render(); } break; }
+    case 'finish': if (arm('finish')) { const r = await act({ type: 'finish' }, 'finish'); if (!r.error) { A.tab = 'rank'; render(); } } break;
+    case 'reopen': act({ type: 'reopen' }); break;
+    case 'cohost': { const on = t.dataset.on === '1', who = nm(id); const r = await act({ type: 'setCohost', pid: id, on }, 'cohost'); if (!r.error) toast(on ? `${who} 님을 호스트로 지정했습니다.` : `${who} 님의 호스트를 해제했습니다.`); break; }
+    case 'reset': if (arm('reset')) act({ type: 'reset' }); break;
+    case 'copy': copy(t.dataset.what === 'cohost' ? cohostUrl() : inviteText()); break;
+    case 'share': try { await navigator.share({ title: s.title, text: inviteText() }); } catch (err) {} break;
+  }
+});
+
+document.addEventListener('input', (e) => {
+  const el = e.target;
+  if (el.hasAttribute('data-draft')) {
+    A.drafts[el.id] = el.value;
+    if (el.dataset.lvin) A.drafts[el.dataset.lvin + '-self'] = '';
+  }
+});
+document.addEventListener('change', (e) => {
+  const el = e.target;
+  if (el.id === 'bal') act({ type: 'settings', fields: { balanceLevel: el.checked } });
+  if (el.id === 'sc-deuce' && A.sheet) { A.sheet.deuce = true; A.sheet.lose = S().target - 1; renderSheet(); }
+  if (el.dataset.save && isHost()) {
+    const f = el.dataset.save;
+    let v = el.value;
+    if (f === 'date') { const d = document.getElementById('s-date').value, tm = document.getElementById('s-time').value; v = d ? d + (tm ? 'T' + tm : '') : ''; }
+    if ((S()[f] || '') !== v) act({ type: 'settings', fields: { [f]: v } }, 'set').then((r) => { if (!r.error) { delete A.drafts[el.id]; toast('저장했습니다.'); } });
+  }
+});
+document.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (e.target.id === 'createForm') createEvent();
+  if (e.target.id === 'joinForm') join('yes');
+  if (e.target.id === 'addForm') {
+    const v = draft('r-name').trim();
+    if (!v) return;
+    act({ type: 'addPlayer', name: v }, 'addPlayer').then((r) => { if (!r.error) { A.drafts['r-name'] = ''; render(); const el = document.getElementById('r-name'); if (el) el.focus(); } });
+  }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && A.sheet) closeSheet(true); });
+
+// 경과 시간 표시 갱신 (입력 중이 아닐 때만)
+setInterval(() => {
+  const ae = document.activeElement;
+  if (A.s && A.s.phase === 'live' && !A.sheet && !(ae && /INPUT|TEXTAREA/.test(ae.tagName))) render();
+}, 30000);
+
+if (false) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+window.__oc = { A, poll, render, toast };
+render();
+if (A.eid) poll();
+})();
+</script>
+</body>
+</html>
