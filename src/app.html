@@ -113,7 +113,7 @@ h1,h2,h3{text-wrap:balance}
 .primary{flex:1;border:0;border-radius:999px;background:var(--court);color:var(--chalk);padding:15px 18px;font-weight:700;font-size:16px;min-height:52px}
 .primary:disabled{opacity:.5;cursor:not-allowed}
 .secondary{border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:14px 18px;font-weight:500;min-height:52px}
-.small{min-height:36px;padding:7px 14px;font-size:14px}
+.small{min-height:36px;padding:7px 14px;font-size:14px;white-space:nowrap;flex-shrink:0}
 .armed{background:var(--danger)!important;color:#fff!important;border-color:var(--danger)!important}
 @media (hover:hover) and (pointer:fine){.primary:not(:disabled):hover{background:color-mix(in srgb,var(--court) 88%,var(--ink))}.secondary:hover{border-color:var(--muted)}}
 
@@ -304,7 +304,7 @@ if (A.eid) {
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const S = () => A.s;
 const SP = () => Core.SPORTS[S().sport];
-const isHost = () => !!A.k && !!S() && S().hostKey === A.k;
+const isHost = () => !!S() && !!S().youHost; // 서버가 판별 (호스트 키 또는 지정된 호스트의 폰)
 const byId = (id) => S().players.find((p) => p.id === id);
 const nm = (id) => (byId(id) || { name: '?' }).name;
 const me = () => (A.pid ? byId(A.pid) : null);
@@ -330,6 +330,7 @@ async function getState() {
   u.searchParams.set('a', 'state'); u.searchParams.set('e', A.eid);
   if (A.v) u.searchParams.set('v', A.v);
   if (A.k) u.searchParams.set('k', A.k);
+  u.searchParams.set('dev', DEV);
   const r = await fetch(u, { cache: 'no-store' });
   return r.json();
 }
@@ -372,6 +373,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 function setState(s) {
   const prevMine = A.s && A.pid ? JSON.stringify(Core.myView(A.s, A.pid).current && Core.myView(A.s, A.pid).current.id) : null;
+  const wasHost = A.s ? !!A.s.youHost : null;
   A.s = s; A.v = s.v; A.loaded = true; A.err = null;
   if (!A.pid && isHost()) { const h = s.players.find((p) => p.src === 'host'); if (h && mem()[A.eid] && mem()[A.eid].hostPid === h.id) A.pid = h.id; }
   if (A.pid && !byId(A.pid)) A.pid = null;
@@ -381,6 +383,10 @@ function setState(s) {
     const v = Core.myView(s, A.pid);
     const now = JSON.stringify(v.current && v.current.id);
     if (now !== prevMine && v.current && navigator.vibrate) navigator.vibrate([120, 60, 120]);
+  }
+  if (wasHost !== null && wasHost !== !!s.youHost) {
+    A.tab = null;
+    toast(s.youHost ? '호스트로 지정되었습니다. 진행·명단·초대 메뉴가 생겼습니다.' : '호스트 지정이 해제되었습니다.');
   }
   render();
 }
@@ -726,7 +732,7 @@ function renderRoster() {
   } else summary = '참석자가 4명 이상이면 대진을 짤 수 있습니다.';
 
   const players = s.players.slice().sort((a, b) => (b.present - a.present)).map((p) => {
-    const src = p.src === 'walkin' ? '현장 추가' : p.src === 'host' ? '호스트' : (p.status === 'no' ? '불참 응답' : p.claimed ? '참석 응답' : '응답 대기');
+    const src = (p.src === 'host' ? '만든 사람, 호스트' : (s.cohosts || []).includes(p.id) ? '호스트, ' : '') + (p.src === 'host' ? '' : p.src === 'walkin' ? '현장 추가' : (p.status === 'no' ? '불참 응답' : p.claimed ? '참석 응답' : '응답 대기'));
     return `<div class="player${p.present ? '' : ' off'}">
       <button class="check press" data-act="present" data-id="${p.id}" aria-pressed="${p.present}" aria-label="${esc(p.name)} 오늘 참석"></button>
       <span class="pname">${esc(p.name)}<small>${src}</small></span>
@@ -783,10 +789,27 @@ function renderRoster() {
 
 // ----- 호스트: 초대 -----
 function inviteUrl() { const u = new URL(location.href); u.search = '?e=' + encodeURIComponent(A.eid); u.hash = ''; if (LOCAL && QS.get('api')) u.searchParams.set('api', QS.get('api')); return u.toString(); }
-function cohostUrl() { const u = new URL(inviteUrl()); u.searchParams.set('k', A.k); return u.toString(); }
+function cohostUrl() { const u = new URL(inviteUrl()); u.searchParams.set('k', S().hostKey || A.k); return u.toString(); }
 function inviteText() {
   const s = S();
   return [`[${SP().label}] ${s.title}`, s.date ? fmtDate(s.date) : '', s.place || '', s.note || '', '', '참석 여부를 눌러 주세요.', inviteUrl()].filter((x, i, arr) => x !== '' || (i > 0 && arr[i - 1] !== '')).join('\n');
+}
+function hostsHtml() {
+  const s = S();
+  const creator = s.players.find((p) => p.src === 'host');
+  const co = (s.cohosts || []).map(byId).filter(Boolean);
+  const pickable = s.players.filter((p) => p.claimed && p.src !== 'host' && !(s.cohosts || []).includes(p.id));
+  const waiting = s.players.filter((p) => !p.claimed && p.src !== 'host').length;
+  const rows = [];
+  if (creator) rows.push(`<div class="team"><b>${esc(creator.name)}</b><span class="hint">만든 사람</span></div>`);
+  co.forEach((p) => rows.push(`<div class="team"><b>${esc(p.name)}${p.id === A.pid ? ' <span class="hint" style="display:inline">(나)</span>' : ''}</b><button class="secondary small press" data-act="cohost" data-id="${p.id}" data-on="0">${p.id === A.pid ? '내려놓기' : '해제'}</button></div>`));
+  return `<section class="block"><h2>호스트 <small>${NF.format((creator ? 1 : 0) + co.length)}명</small></h2><div class="panel">
+      ${rows.join('') || '<div class="team"><span class="hint">모임을 만든 폰이 호스트입니다</span></div>'}
+      <div class="field"><span style="font-size:13px;color:var(--muted)">호스트 맡기기</span>
+        ${pickable.length ? `<div class="chips">${pickable.map((p) => `<button class="chip press" data-act="cohost" data-id="${p.id}" data-on="1">${esc(p.name)}</button>`).join('')}</div>` : '<span class="hint">지정할 수 있는 사람이 아직 없습니다</span>'}
+        ${waiting ? `<span class="hint">초대 링크로 자기 폰에서 응답한 사람만 지정할 수 있습니다. 아직 응답하지 않은 사람 ${NF.format(waiting)}명</span>` : ''}</div>
+      ${s.hostKey ? `<div class="row"><span class="lbl">공동 호스트 링크<span class="hint">받은 사람 누구나 호스트가 됩니다. 단톡방에는 올리지 마세요</span></span><button class="secondary small press" data-act="copy" data-what="cohost">복사</button></div>` : ''}
+    </div><p class="summary">지정하면 그 사람 폰에 바로 진행·명단·초대 메뉴가 생기고, 해제하면 바로 사라집니다. 만든 사람의 권한은 해제되지 않습니다.</p></section>`;
 }
 function renderInvite() {
   const s = S();
@@ -801,7 +824,7 @@ function renderInvite() {
       ${no.length ? `<div class="field"><span style="font-size:13px;color:var(--muted)">불참</span><div class="chips">${no.map((p) => `<span class="chip static">${esc(p.name)}</span>`).join('')}</div></div>` : ''}
       ${wait.length ? `<div class="field"><span style="font-size:13px;color:var(--muted)">미리 넣어 둔 이름 중 응답 대기</span><div class="chips">${wait.map((p) => `<span class="chip static">${esc(p.name)}</span>`).join('')}</div></div>` : ''}
     </div></section>
-    <section class="block"><h2>공동 호스트</h2><div class="panel"><div class="row"><span class="lbl">호스트 링크<span class="hint">이 링크를 받은 사람은 명단 수정과 경기 종료를 할 수 있습니다</span></span><button class="secondary small press" data-act="copy" data-what="cohost">복사</button></div></div></section>`;
+    ${hostsHtml()}`;
   dock(s.phase === 'rsvp' ? `<button class="primary press" data-act="tab" data-tab="roster">명단 확인하고 대진 짜기</button>` : '');
 }
 
@@ -955,6 +978,7 @@ document.addEventListener('click', async (e) => {
     case 'start': { const r = await act({ type: 'start' }, 'start'); if (!r.error) { toast('경기를 시작했습니다.'); A.tab = 'run'; render(); } break; }
     case 'finish': if (arm('finish')) { const r = await act({ type: 'finish' }, 'finish'); if (!r.error) { A.tab = 'rank'; render(); } } break;
     case 'reopen': act({ type: 'reopen' }); break;
+    case 'cohost': { const on = t.dataset.on === '1', who = nm(id); const r = await act({ type: 'setCohost', pid: id, on }, 'cohost'); if (!r.error) toast(on ? `${who} 님을 호스트로 지정했습니다.` : `${who} 님의 호스트를 해제했습니다.`); break; }
     case 'reset': if (arm('reset')) act({ type: 'reset' }); break;
     case 'copy': copy(t.dataset.what === 'cohost' ? cohostUrl() : inviteText()); break;
     case 'share': try { await navigator.share({ title: s.title, text: inviteText() }); } catch (err) {} break;

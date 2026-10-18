@@ -32,7 +32,7 @@ function setup() {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   try {
-    if (p.a === 'state') return out_(readState_(p.e, p.k, p.v));
+    if (p.a === 'state') return out_(readState_(p.e, p.k, p.v, p.dev));
     return out_({ ok: true, name: '오픈코트 서버', time: new Date().toISOString() });
   } catch (err) {
     return out_({ error: String(err && err.message || err) });
@@ -71,29 +71,30 @@ function ctx_(isHost, dev) {
 function create_(body) {
   var s = Core.newEvent(body.event || {}, ctx_(true, body.dev));
   save_(s, true);
-  return { ok: true, id: s.id, hostKey: s.hostKey, v: s.v, state: Core.publicState(s, true) };
+  return { ok: true, id: s.id, hostKey: s.hostKey, v: s.v, state: Core.publicState(s, true, true) };
 }
 
 function act_(body) {
   var s = load_(body.e);
   if (!s) return { error: '모임을 찾을 수 없습니다. 링크를 다시 확인해 주세요.' };
-  var isHost = !!body.k && body.k === s.hostKey;
+  var viaKey = !!body.k && body.k === s.hostKey;
+  var isHost = Core.hostCheck(s, body.k, body.dev);
   var before = s.phase;
   var r = Core.apply(s, body.action || {}, ctx_(isHost, body.dev)) || {};
   if (r.error) return { error: r.error, v: s.v };
   save_(s, false);
   if (s.phase === 'done' && before !== 'done') writeResults_(s);
-  return { ok: true, result: r, v: s.v, state: Core.publicState(s, isHost) };
+  return { ok: true, result: r, v: s.v, state: Core.publicState(s, Core.hostCheck(s, body.k, body.dev), viaKey) };
 }
 
-function readState_(id, key, knownV) {
+function readState_(id, key, knownV, dev) {
   if (!id) return { error: '모임 ID가 없습니다.' };
   var cache = CacheService.getScriptCache();
   var v = cache.get('v:' + id);
   if (v && knownV && String(knownV) === v) return { same: true, v: Number(v) };
   var s = load_(id);
   if (!s) return { error: '모임을 찾을 수 없습니다. 링크를 다시 확인해 주세요.' };
-  return { ok: true, v: s.v, state: Core.publicState(s, !!key && key === s.hostKey) };
+  return { ok: true, v: s.v, state: Core.publicState(s, Core.hostCheck(s, key, dev), !!key && key === s.hostKey) };
 }
 
 // ---------- 저장 ----------

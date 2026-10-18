@@ -165,3 +165,25 @@ console.log('\n모든 검증 통과');
   assert(s.dirty, '새 참석자 → 다시 짜기 표시');
   console.log('[지각 응답] 경기 중 새로 참석하면 호스트에게 다시 짜기 표시 OK');
 }
+
+// 9) 호스트 지정
+{
+  const s = Core.newEvent({ sport: 'pickleball', courts: 1, hostName: '만든이', dev: 'dev-host' }, H);
+  for (let i = 0; i < 4; i++) ok(Core.apply(s, { type: 'rsvp', name: 'C' + i, status: 'yes' }, U('dc' + i)));
+  ok(Core.apply(s, { type: 'addPlayer', name: '현장손님' }, H));
+  const c0 = s.players.find((p) => p.name === 'C0'), walk = s.players.find((p) => p.name === '현장손님');
+  assert(!Core.hostCheck(s, null, 'dc0'), '지정 전에는 호스트 아님');
+  assert(Core.apply(s, { type: 'setCohost', pid: walk.id, on: true }, H).error, '폰 응답 없는 사람은 지정 불가');
+  ok(Core.apply(s, { type: 'setCohost', pid: c0.id, on: true }, H));
+  assert(Core.hostCheck(s, null, 'dc0'), '지정된 사람의 폰은 호스트');
+  assert(!Core.hostCheck(s, null, 'dc1'), '다른 폰은 아님');
+  const c1 = s.players.find((p) => p.name === 'C1');
+  ok(Core.apply(s, { type: 'setCohost', pid: c1.id, on: true }, ctxOf(Core.hostCheck(s, null, 'dc0'), 'dc0'))); // 지정 호스트가 또 지정
+  ok(Core.apply(s, { type: 'draw' }, ctxOf(Core.hostCheck(s, null, 'dc1'), 'dc1'))); // 지정 호스트가 대진
+  ok(Core.apply(s, { type: 'setCohost', pid: c0.id, on: false }, ctxOf(Core.hostCheck(s, null, 'dc1'), 'dc1')));
+  assert(!Core.hostCheck(s, null, 'dc0'), '해제되면 바로 권한 없음');
+  assert(Core.hostCheck(s, s.hostKey, ''), '만든 사람 키는 항상 호스트');
+  const pub = Core.publicState(s, true, false);
+  assert(!pub.hostKey && pub.youHost === true, '지정 호스트에게는 키를 주지 않음');
+  console.log('[호스트 지정] 응답한 폰만 지정, 지정 호스트가 대진·재지정, 해제 즉시 권한 소멸 OK');
+}

@@ -16,22 +16,22 @@
       const s = db[q.get('e')];
       if (!s) return { error: '모임을 찾을 수 없습니다.' };
       if (q.get('v') && +q.get('v') === s.v) return { same: true, v: s.v };
-      return { ok: true, v: s.v, state: Core.publicState(s, q.get('k') === s.hostKey) };
+      return { ok: true, v: s.v, state: Core.publicState(s, Core.hostCheck(s, q.get('k'), q.get('dev')), q.get('k') === s.hostKey) };
     }
     const b = JSON.parse(body || '{}');
     if (b.a === 'create') {
       const s = Core.newEvent(b.event || {}, ctx(true, b.dev));
       db[s.id] = s; persist();
-      return { ok: true, id: s.id, hostKey: s.hostKey, v: s.v, state: Core.publicState(s, true) };
+      return { ok: true, id: s.id, hostKey: s.hostKey, v: s.v, state: Core.publicState(s, true, true) };
     }
     if (b.a === 'act') {
       const s = db[b.e];
       if (!s) return { error: '모임을 찾을 수 없습니다.' };
-      const isHost = !!b.k && b.k === s.hostKey;
+      const isHost = Core.hostCheck(s, b.k, b.dev);
       const r = Core.apply(s, b.action || {}, ctx(isHost, b.dev)) || {};
       if (r.error) return { error: r.error, v: s.v };
       persist();
-      return { ok: true, result: r, v: s.v, state: Core.publicState(s, isHost) };
+      return { ok: true, result: r, v: s.v, state: Core.publicState(s, Core.hostCheck(s, b.k, b.dev), !!b.k && b.k === s.hostKey) };
     }
     return { error: '알 수 없는 요청입니다.' };
   }

@@ -32,7 +32,7 @@ function setup() {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   try {
-    if (p.a === 'state') return out_(readState_(p.e, p.k, p.v));
+    if (p.a === 'state') return out_(readState_(p.e, p.k, p.v, p.dev));
     return out_({ ok: true, name: '오픈코트 서버', time: new Date().toISOString() });
   } catch (err) {
     return out_({ error: String(err && err.message || err) });
@@ -71,29 +71,30 @@ function ctx_(isHost, dev) {
 function create_(body) {
   var s = Core.newEvent(body.event || {}, ctx_(true, body.dev));
   save_(s, true);
-  return { ok: true, id: s.id, hostKey: s.hostKey, v: s.v, state: Core.publicState(s, true) };
+  return { ok: true, id: s.id, hostKey: s.hostKey, v: s.v, state: Core.publicState(s, true, true) };
 }
 
 function act_(body) {
   var s = load_(body.e);
   if (!s) return { error: '모임을 찾을 수 없습니다. 링크를 다시 확인해 주세요.' };
-  var isHost = !!body.k && body.k === s.hostKey;
+  var viaKey = !!body.k && body.k === s.hostKey;
+  var isHost = Core.hostCheck(s, body.k, body.dev);
   var before = s.phase;
   var r = Core.apply(s, body.action || {}, ctx_(isHost, body.dev)) || {};
   if (r.error) return { error: r.error, v: s.v };
   save_(s, false);
   if (s.phase === 'done' && before !== 'done') writeResults_(s);
-  return { ok: true, result: r, v: s.v, state: Core.publicState(s, isHost) };
+  return { ok: true, result: r, v: s.v, state: Core.publicState(s, Core.hostCheck(s, body.k, body.dev), viaKey) };
 }
 
-function readState_(id, key, knownV) {
+function readState_(id, key, knownV, dev) {
   if (!id) return { error: '모임 ID가 없습니다.' };
   var cache = CacheService.getScriptCache();
   var v = cache.get('v:' + id);
   if (v && knownV && String(knownV) === v) return { same: true, v: Number(v) };
   var s = load_(id);
   if (!s) return { error: '모임을 찾을 수 없습니다. 링크를 다시 확인해 주세요.' };
-  return { ok: true, v: s.v, state: Core.publicState(s, !!key && key === s.hostKey) };
+  return { ok: true, v: s.v, state: Core.publicState(s, Core.hostCheck(s, key, dev), !!key && key === s.hostKey) };
 }
 
 // ---------- 저장 ----------
@@ -670,7 +671,7 @@ function writeResults_(s) {
       target: clampInt(input.target, 5, 31, SPORTS[sport].target),
       minutes: clampInt(input.minutes, 5, 40, SPORTS[sport].minutes),
       balanceLevel: !!input.balanceLevel, totalRounds: null,
-      phase: 'rsvp', dirty: false, players: [], teams: [], rounds: [],
+      phase: 'rsvp', dirty: false, players: [], teams: [], rounds: [], cohosts: [],
     };
     if (input.hostName) {
       s.players.push({ id: ctx.id(6), name: str(input.hostName, 16), level: cleanLevel(sport, input.hostLevel),
@@ -749,7 +750,16 @@ function writeResults_(s) {
   function markDirty(s) { if (s.rounds.length && s.phase !== 'done') s.dirty = true; }
 
   // ---------- 동작 ----------
-  const HOST_ONLY = new Set(['settings', 'addPlayer', 'setPlayer', 'removePlayer', 'setTeams', 'draw', 'start', 'finish', 'reopen', 'reset', 'voidMatch']);
+  const HOST_ONLY = new Set(['settings', 'addPlayer', 'setPlayer', 'removePlayer', 'setTeams', 'draw', 'start', 'finish', 'reopen', 'reset', 'voidMatch', 'setCohost']);
+
+  // 호스트 판별: 만든 사람의 호스트 키(또는 공동 호스트 링크)를 가졌거나,
+  // 지정된 호스트이면서 그 사람이 초대 링크로 응답했던 바로 그 폰인 경우
+  function hostCheck(s, key, dev) {
+    if (key && key === s.hostKey) return true;
+    if (!dev) return false;
+    const p = s.players.find((x) => x.dev && x.dev === dev);
+    return !!(p && (s.cohosts || []).includes(p.id));
+  }
 
   function err(msg) { return { error: msg }; }
 
@@ -813,6 +823,17 @@ function writeResults_(s) {
       }
       case 'finish': s.phase = 'done'; s.finishedAt = ctx.now; r = { ok: true }; break;
       case 'reopen': s.phase = 'live'; assign(s, ctx); r = { ok: true }; break;
+      case 'setCohost': {
+        const p = P(a.pid); if (!p) return err('없는 참가자입니다.');
+        s.cohosts = s.cohosts || [];
+        if (a.on) {
+          if (!p.dev) return err(`${p.name} 님은 아직 자기 폰으로 응답하지 않았습니다. 초대 링크를 열어 자기 이름을 누르면 지정할 수 있습니다.`);
+          if (!s.cohosts.includes(p.id)) s.cohosts.push(p.id);
+        } else {
+          s.cohosts = s.cohosts.filter((id) => id !== p.id);
+        }
+        r = { ok: true }; break;
+      }
       case 'reset':
         if (s.phase === 'live' || s.phase === 'done') {
           if (allMatches(s).some((m) => m.state === 'done') && !a.force) return err('결과가 있는 경기는 지울 수 없습니다.');
@@ -954,16 +975,19 @@ function writeResults_(s) {
   }
 
   // 남에게 보낼 때 호스트 키와 기기 식별값은 뺀다
-  function publicState(s, isHost) {
+  // viaKey: 호스트 키로 들어온 사람에게만 키를 돌려준다 (지정 호스트는 해제되면 권한이 바로 사라지도록 키를 주지 않음)
+  function publicState(s, isHost, viaKey) {
     const c = JSON.parse(JSON.stringify(s));
-    if (!isHost) delete c.hostKey;
+    if (!viaKey) delete c.hostKey;
+    c.cohosts = c.cohosts || [];
+    c.youHost = !!isHost;
     c.players.forEach((p) => { p.claimed = !!p.dev; delete p.dev; });
     return c;
   }
 
   const Core = {
     SPORTS, GRADES, SELF_DUPR, levelLabel, levelNum, cleanLevel, makeLevelOf,
-    newEvent, apply, assign, myView, boardView, publicState, allMatches, findMatch, totalRounds, frontRound,
+    newEvent, apply, assign, hostCheck, myView, boardView, publicState, allMatches, findMatch, totalRounds, frontRound,
     standings: (s) => Engine.standings(s),
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = Core;
